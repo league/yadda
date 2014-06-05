@@ -1,3 +1,3 @@
-yadda — Yet Another Docker Deploy App
-=====================================
+yadda: Yet Another Docker Deploy App
+====================================
 
