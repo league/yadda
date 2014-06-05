@@ -12,9 +12,9 @@ version_py = join(dirname(__file__), join('yadda', 'version.py'))
 
 try:
     short_cmd = 'git describe --always --tags --match v*'.split(' ')
-    short_version = check_output(short_cmd).rstrip()[1:]
+    short_version = check_output(short_cmd).decode().rstrip()[1:]
     full_cmd  = short_cmd + ['--long', '--dirty=+']
-    full_version = check_output(full_cmd).rstrip()[1:]
+    full_version = check_output(full_cmd).decode().rstrip()[1:]
 except:
     execfile(version_py)
     short_version = short
