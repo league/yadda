@@ -56,19 +56,20 @@ class Env(AppComponent):
 
     def __copy__(self):
         assert(self.frozen)
-        k = Env(a)
-        k.env = copy(self.env)
-        return k
+        e = Env(self.app)
+        e.env = copy(self.env)
+        return e
 
     def set(self, k, v):
-        assert(not self.frozen)
-        self.env[k] = v
-        return self
+        e = copy(self) if self.frozen else self
+        e.env[k] = v
+        return e
 
     def rm(self, k):
-        assert(not self.frozen)
-        del self.env[k]
-        return self
+        e = copy(self) if self.frozen else self
+        if k in e.env:
+            del e.env[k]
+        return e
 
     def freeze(self):
         if not self.frozen:
@@ -115,15 +116,19 @@ class Build(AppComponent):
     def tag(self):
         return self.app.name + ':' + self.version()
 
+    def set_image_id(self, image_id):
+        self.image_id = image_id
+
     def __str__(self):
         buf = self.tag()
         if self.image_id:
-            buf += ' »' + self.image_id
+            buf += ' !' + self.image_id
         return buf
 
 class Release(AppComponent):
-    def __init__(self, app, build, env):
-        super(Release, self).__init__(app, app.releases)
+    def __init__(self, build, env):
+        super(Release, self).__init__(env.app, env.app.releases)
+        assert(env.app == build.app)
         assert(isinstance(build, Build))
         assert(isinstance(env, Env))
         assert(env.frozen)
@@ -136,28 +141,3 @@ class Release(AppComponent):
             self.build.version(),
             self.env.version()
             )
-
-a = App('suspicious-einstein')
-print(str(a))
-e = Env(a).freeze()
-f = copy(e).set('DATABASE', 'postgresql').freeze()
-g = copy(f).set('BLORQ', '11932')
-h = copy(f).set('SUPER_SECRET', 'J/2JBzzb^>zWSuKNNJ2"+\'TY]9czMcm)YW9?+2u}') \
-    .rm('DATABASE').freeze()
-print(e)
-print(f)
-print(g)
-print(h)
-
-b = Build(a, 'fb36c55dec633a2a901cd65f119110aed443abd6')
-c = Build(a, '32f3f306b49f728a65583a56e39232a463d90b6b')
-c.image_id = 'aaa'
-print(b)
-print(c)
-
-r1 = Release(a, b, f)
-r2 = Release(a, c, f)
-r3 = Release(a, c, h)
-print(r1)
-print(r2)
-print(r3)
