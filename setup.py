@@ -11,10 +11,9 @@ from subprocess import check_output
 version_py = join(dirname(__file__), join('yadda', 'version.py'))
 
 try:
-    short_cmd = 'git describe --always --tags --match v*'.split(' ')
-    short_version = check_output(short_cmd).decode().rstrip()[1:]
-    full_cmd  = short_cmd + ['--long', '--dirty=+']
+    full_cmd = 'git describe --always --tags --match v* --dirty=+'.split(' ')
     full_version = check_output(full_cmd).decode().rstrip()[1:]
+    short_version = full_version.split('-')[0]
 except:
     execfile(version_py)
     short_version = short
