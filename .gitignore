@@ -1,0 +1,5 @@
+*.pyc
+/yadda/version.py
+/build/
+/dist/
+/yadda.egg-info/
