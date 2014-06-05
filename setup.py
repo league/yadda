@@ -34,6 +34,7 @@ setup(
     version = short_version,
     packages = find_packages(),
     test_suite = 'tests',
+    tests_require = 'coverage',
     entry_points = {
         'console_scripts': [
             'yadda = yadda.main:main',

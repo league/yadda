@@ -94,7 +94,16 @@ class ReleaseTest(ReleaseTestSetup):
 
 
 class PickleModelsTest(ReleaseTestSetup):
-    def test_pickle_app(self):
+    def setUp(self):
+        super(PickleModelsTest, self).setUp()
         import pickle
-        p = pickle.dumps(self.a)
-        print(len(p))
+        self.p = pickle.dumps(self.a)
+        self.b = pickle.loads(self.p)
+
+    def test_app_dag_preserved(self):
+        self.assertNotEquals(self.a, self.b)
+        self.assertEquals(len(self.a.envs), len(self.b.envs))
+        self.assertEquals(len(self.a.builds), len(self.b.builds))
+        self.assertEquals(len(self.a.releases), len(self.b.releases))
+        for x in self.b.envs + self.b.builds + self.b.releases:
+            self.assertEquals(self.b, x.app)
