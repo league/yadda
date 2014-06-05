@@ -30,6 +30,7 @@ setup(
     name = "yadda",
     version = short_version,
     packages = find_packages(),
+    test_suite = 'tests',
     entry_points = {
         'console_scripts': [
             'yadda = yadda.main:main',
