@@ -17,30 +17,30 @@ class EnvModelTest(unittest.TestCase):
 
     def test_new_env(self):
         self.assertEqual(self.e.version(), 'dev.??')
-        self.assert_('YADDA' in self.e.env)
+        self.assertTrue('YADDA' in self.e.env)
         self.assertEqual(self.e.app, self.a)
 
     def test_set_rm_var(self):
         self.e.set('DATABASE', 'postgres')
-        self.assert_('YADDA' in self.e.env)
-        self.assert_('DATABASE' in self.e.env)
+        self.assertTrue('YADDA' in self.e.env)
+        self.assertTrue('DATABASE' in self.e.env)
         self.e.rm('YADDA')
-        self.assert_('YADDA' not in self.e.env)
-        self.assert_('DATABASE' in self.e.env)
+        self.assertTrue('YADDA' not in self.e.env)
+        self.assertTrue('DATABASE' in self.e.env)
 
     def test_freeze(self):
-        self.assert_(not self.e.frozen)
+        self.assertTrue(not self.e.frozen)
         self.e.set('SECRET', 'abc123').freeze()
-        self.assert_(isinstance(self.e.serial, int))
-        self.assert_(self.e.timestamp)
+        self.assertTrue(isinstance(self.e.serial, int))
+        self.assertTrue(self.e.timestamp)
         self.assertEqual(1, len(self.a.envs))
         self.assertEqual('dev.1.13308', self.e.version())
 
     def test_copy(self):
         self.e.freeze()
         self.f = self.e.set('SECRET', 'abc123')
-        self.assert_('SECRET' not in self.e.env)
-        self.assert_('SECRET' in self.f.env)
+        self.assertTrue('SECRET' not in self.e.env)
+        self.assertTrue('SECRET' in self.f.env)
 
     def test_serial(self):
         self.e.freeze()
@@ -58,9 +58,9 @@ class BuildModelTest(unittest.TestCase):
         self.b1 = Build(self.a, 'fb36c55dec633a2a901cd65f119110aed443abd6')
 
     def test_new_build(self):
-        self.assert_(self.b1 in self.a.builds)
+        self.assertTrue(self.b1 in self.a.builds)
         self.assertEqual(1, len(self.a.builds))
-        self.assert_(self.b1.git_hash.startswith(self.b1.git_abbrev()))
+        self.assertTrue(self.b1.git_hash.startswith(self.b1.git_abbrev()))
         self.assertEqual('dev.1.fb36c', self.b1.version())
         self.assertEqual('mytest:dev.1.fb36c', self.b1.tag())
 
@@ -71,7 +71,7 @@ class BuildModelTest(unittest.TestCase):
 
 
 
-class ReleaseTest(unittest.TestCase):
+class ReleaseTestSetup(unittest.TestCase):
     def setUp(self):
         self.a = App('fooo')
         self.e1 = mkEnv(self.a).freeze()
@@ -82,6 +82,7 @@ class ReleaseTest(unittest.TestCase):
         self.e2 = self.e1.set('BAR', 'frites').freeze()
         self.r3 = Release(self.b2, self.e2)
 
+class ReleaseTest(ReleaseTestSetup):
     def test_new_release(self):
         self.assertEqual('dev.1', self.r1.version())
         self.assertEqual('dev.2', self.r2.version())
@@ -89,3 +90,11 @@ class ReleaseTest(unittest.TestCase):
 
     def test_release_str(self):
         str(self.r1)
+
+
+
+class PickleModelsTest(ReleaseTestSetup):
+    def test_pickle_app(self):
+        import pickle
+        p = pickle.dumps(self.a)
+        print(len(p))
