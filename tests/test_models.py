@@ -101,9 +101,31 @@ class PickleModelsTest(ReleaseTestSetup):
         self.b = pickle.loads(self.p)
 
     def test_app_dag_preserved(self):
-        self.assertNotEquals(self.a, self.b)
-        self.assertEquals(len(self.a.envs), len(self.b.envs))
-        self.assertEquals(len(self.a.builds), len(self.b.builds))
-        self.assertEquals(len(self.a.releases), len(self.b.releases))
+        self.assertNotEqual(self.a, self.b)
+        self.assertEqual(len(self.a.envs), len(self.b.envs))
+        self.assertEqual(len(self.a.builds), len(self.b.builds))
+        self.assertEqual(len(self.a.releases), len(self.b.releases))
         for x in self.b.envs + self.b.builds + self.b.releases:
-            self.assertEquals(self.b, x.app)
+            self.assertEqual(self.b, x.app)
+
+class SaveLoadTest(ReleaseTestSetup):
+    def test_save_load(self):
+        from tempfile import mkdtemp
+        import os
+        d = mkdtemp()
+        f = os.path.join(d, 'mydb')
+        print("Using file "+f)
+        try:
+            self.a.save(f)
+            self.b = App.load(self.a.name, f)
+            self.assertNotEqual(self.a, self.b)
+            self.assertEqual(self.a.name, self.b.name)
+            self.assertEqual(self.a.role, self.b.role)
+            self.assertEqual(len(self.a.envs), len(self.b.envs))
+            self.assertEqual(len(self.a.builds), len(self.b.builds))
+            self.assertEqual(len(self.a.releases), len(self.b.releases))
+            for x in self.b.envs + self.b.builds + self.b.releases:
+                self.assertEqual(self.b, x.app)
+        finally:
+            os.unlink(f)
+            os.rmdir(d)

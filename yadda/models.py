@@ -1,9 +1,11 @@
 # yadda.models
 
+from contextlib import closing
 from copy import copy
 from datetime import datetime
-from yadda import version
+from yadda import version, settings
 import hashlib
+import shelve
 
 class Role(object):
     dev = 'dev'
@@ -29,9 +31,20 @@ class App(object):
     def __str__(self):
         return self.name
 
+    def save(self, file=settings.DATA_FILE):
+        with closing(shelve.open(file)) as sh:
+            sh[self.name] = self
+
     @staticmethod
     def next_serial(xs):
         return 1 + max([x.serial for x in xs] or [0])
+
+    @staticmethod
+    def load(name, file=settings.DATA_FILE):
+        with closing(shelve.open(file)) as sh:
+            app = sh[name]
+            assert(isinstance(app, App))
+            return app
 
 class AppComponent(object):
     def __init__(self, app, ls=None):
