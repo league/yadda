@@ -1,4 +1,5 @@
-# yadda.models
+# yadda.models ▪ coding: utf8
+# ©2014 Christopher League <league@contrapunctus.net>
 
 from contextlib import closing
 from copy import copy

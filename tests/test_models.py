@@ -1,3 +1,6 @@
+# test_models ▪ Test the model classes ▪ coding: utf8
+# ©2014 Christopher League <league@contrapunctus.net>
+
 import unittest
 from yadda.models import Role, App, Env, Build, Release
 

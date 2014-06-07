@@ -1,3 +1,6 @@
+# test_tests ▪ ensure unittest itself is working ▪ coding: utf8
+# ©2014 Christopher League <league@contrapunctus.net>
+
 import unittest
 
 class TestTestingFramework(unittest.TestCase):

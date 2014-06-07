@@ -1,3 +1,6 @@
+# test_version ▪ Ensure version.py is filled in correctly ▪ coding: utf8
+# ©2014 Christopher League <league@contrapunctus.net>
+
 import unittest
 
 from yadda import version

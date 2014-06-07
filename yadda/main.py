@@ -1,3 +1,6 @@
+# yadda.main ▪ coding: utf8
+# ©2014 Christopher League <league@contrapunctus.net>
+
 from yadda import version
 
 import argparse
