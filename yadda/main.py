@@ -3,6 +3,7 @@
 
 from yadda import version
 
+from yadda.utils import say, show_opts
 import argparse
 import pkgutil
 import sys
@@ -17,8 +18,6 @@ def main(argv=None):
                         help='perform a trial run without making changes')
     common.add_argument('-v', '--verbose', action='store_true',
                         help='increase output about what is happening')
-    common.add_argument('-C', '--directory', metavar='DIR',
-                        help='change to DIR before doing anything else')
     subparse = ap.add_subparsers(title='Commands')
     for imp, cmd, pkg in pkgutil.iter_modules(yadda.commands.__path__):
         if not pkg:
@@ -27,6 +26,7 @@ def main(argv=None):
                        (cmd, parents=[common], **kwargs))
             p.set_defaults(func=m.run)
     opts = ap.parse_args(sys.argv[1:] if argv is None else argv)
+    say(opts, opts, show=show_opts)
     opts.func(opts)
 
 if __name__ == '__main__': main()
