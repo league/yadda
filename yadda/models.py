@@ -12,15 +12,12 @@ class Role(object):
     dev = 'dev'
     qa = 'qa'
     live = 'live'
-
-    @classmethod
-    def all(cls):
-        return [cls.dev, cls.qa, cls.live]
+    all = [dev, qa, live]
 
 class App(object):
     def __init__(self, name, role=Role.dev, qa=None, live=None):
         assert(isinstance(name, str))
-        assert(role in Role.all())
+        assert(role in Role.all)
         self.name = name
         self.role = role
         self.qa = qa
