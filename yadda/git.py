@@ -19,3 +19,9 @@ def get_yadda_app():
                                         'yadda.app']).rstrip()
     except subprocess.CalledProcessError:
         raise KeyError
+
+def init_bare(opts, dir):
+    utils.dry_call(opts, ['git', 'init', '--bare', dir])
+
+def set_remote(opts, name, url):
+    utils.dry_call(opts, ['git', 'remote', 'add', name, url])

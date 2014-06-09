@@ -9,8 +9,19 @@ import os
 import unittest
 
 class NonGitTest(caseutils.TmpDirCase):
+    def setUp(self):
+        super(NonGitTest, self).setUp()
+        self.opts = argparse.Namespace(verbose=False, dry_run=False)
+
     def test_has_dot_git(self):
         self.assertFalse(git.has_dot_git())
+
+    def test_init_bare(self):
+        d = uuid().hex[:6] + '.git'
+        git.init_bare(self.opts, d)
+        self.assertTrue(os.path.isdir(d))
+        self.assertTrue(os.path.isfile(os.path.join(d, 'config')))
+        self.assertTrue(os.path.isdir(os.path.join(d, 'hooks')))
 
 class GitTest(caseutils.GitWorkDirCase):
     def setUp(self):

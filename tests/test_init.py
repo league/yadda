@@ -13,6 +13,17 @@ class InitTest(GitWorkDirCase, AppNameCase):
     def test_init_qa(self):
         main(['init', '-n', self.name, 'localhost'])
 
+    def test_init_qa_remote(self):
+        main(['init', self.name, 'localhost'])
+        out = subprocess.check_output('git remote -v'.split())
+        url = 'localhost:%s.git' % self.name
+        ok = False
+        for line in out.split('\n'):
+            if line.startswith('qa'):
+                self.assertTrue(url in line)
+                ok = True
+        self.assertTrue(ok)
+
     def test_init_live(self):
         main(['init', '-n', '-t', 'qa', self.name, 'localhost', 'localhost'])
 
