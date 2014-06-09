@@ -23,5 +23,11 @@ def get_yadda_app():
 def init_bare(opts, dir):
     utils.dry_call(opts, ['git', 'init', '--bare', dir])
 
+def list_remotes():
+    return subprocess.check_output(['git', 'remote']).split('\n')
+
 def set_remote(opts, name, url):
-    utils.dry_call(opts, ['git', 'remote', 'add', name, url])
+    if name in list_remotes():
+        utils.dry_call(opts, ['git', 'remote', 'set-url', name, url])
+    else:
+        utils.dry_call(opts, ['git', 'remote', 'add', name, url])

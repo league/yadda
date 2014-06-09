@@ -38,3 +38,10 @@ class GitTest(caseutils.GitWorkDirCase):
 
     def test_get_app_key_error(self):
         self.assertRaises(KeyError, git.get_yadda_app)
+
+    def test_set_remote(self):
+        git.set_remote(self.opts, 'foo', 'myweb:foo.git')
+
+    def test_set_remote_twice(self):
+        git.set_remote(self.opts, 'project', 'myweb:project.git')
+        git.set_remote(self.opts, 'project', 'ultraweb:project.git')
