@@ -1,9 +1,10 @@
 # yadda.utils ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-import sys
-import re
 import argparse
+import re
+import subprocess
+import sys
 
 def die(mesg):
     "Write a message to stderr, and exit the program"
@@ -18,9 +19,12 @@ def id(x):
 SLUG_CHARS = '-_a-z0-9'
 SLUG_RE = re.compile('^['+SLUG_CHARS+']+$')
 
+def is_slug(s):
+    return bool(SLUG_RE.match(s))
+
 def slug_arg(s):
     "Type checker for a URL-safe slug"
-    if SLUG_RE.match(s): return s
+    if is_slug(s): return s
     import argparse
     raise argparse.ArgumentTypeError\
         ("must contain characters only from -_a-z0-9")
@@ -53,3 +57,12 @@ def say(opts, mesg, show=None, out=sys.stdout):
         else:
             say1(mesg, out)
         out.flush()
+
+def dry_call(opts, cmd, call=subprocess.check_call, **kwargs):
+    mesg = ' '.join(cmd) if type(cmd) == list else cmd
+    return dry_guard(opts, mesg, call, cmd, **kwargs)
+
+def dry_guard(opts, mesg, f, *args, **kwargs):
+    say(opts, mesg)
+    if not opts.dry_run:
+        return f(*args, **kwargs)
