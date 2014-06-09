@@ -14,21 +14,21 @@ def args(cmd, subparse, common):
     p.set_defaults(cmd=cmd)
     vs = p.add_subparsers(title='Variants')
 
-    show = vs.add_parser('show', parents=[common], help=run_show.__doc__,
-                         description=run_show.__doc__.capitalize())
-    show.add_argument('-f', '--format', choices=sorted(FORMATS),
-                      default='human',
-                      help='how to output the environment (default human)')
-    show.add_argument('revision', metavar='REVISION', nargs='?', type=int,
-                      help='version of the environment (default latest)')
-    show.set_defaults(func=run_show)
+    ls = vs.add_parser('ls', parents=[common], help=run_ls.__doc__,
+                       description=run_ls.__doc__.capitalize())
+    ls.add_argument('-f', '--format', choices=sorted(FORMATS),
+                    default='human',
+                    help='how to output the environment (default human)')
+    ls.add_argument('revision', metavar='REVISION', nargs='?', type=int,
+                    help='version of the environment (default latest)')
+    ls.set_defaults(func=run_ls)
 
-    assign = vs.add_parser('set', parents=[common], help=run_set.__doc__,
+    set = vs.add_parser('set', parents=[common], help=run_set.__doc__,
                            description=run_set.__doc__.capitalize())
-    assign.add_argument('bindings', metavar='VAR=VALUE', nargs='+',
-                        type=utils.binding_arg,
-                        help='bindings to add to environment')
-    assign.set_defaults(func=run_set)
+    set.add_argument('bindings', metavar='VAR=VALUE', nargs='+',
+                     type=utils.binding_arg,
+                     help='bindings to add to environment')
+    set.set_defaults(func=run_set)
 
     rm =vs.add_parser('rm', parents=[common], help=run_rm.__doc__,
                       description=run_rm.__doc__.capitalize())
@@ -36,13 +36,13 @@ def args(cmd, subparse, common):
                     help='variables to remove from environment')
     rm.set_defaults(func=run_rm)
 
-    hist = vs.add_parser('history', parents=[common],
-                         help='show changes to the environment over time')
-    hist.set_defaults(func=run_history)
+    log = vs.add_parser('log', parents=[common],
+                         help='list changes to the environment over time')
+    log.set_defaults(func=run_log)
 
     return p
 
-def run_show(opts):
+def run_ls(opts):
     'list the values of variables in the environment'
     i = opts.revision-1 if opts.revision else -1
     FORMATS[opts.format](opts.app.envs[i].env)
@@ -68,7 +68,7 @@ FORMATS={'sh': show_sh,
          'json': show_json,
          'human': show_human}
 
-def run_history(opts):
+def run_log(opts):
     if not opts.app.envs:
         print('No environments')
     else:
