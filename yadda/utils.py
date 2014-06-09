@@ -12,6 +12,9 @@ def die(mesg):
     sys.stderr.write("\n")
     exit(1)
 
+def id(x):
+    return x
+
 SLUG_CHARS = '-_a-z0-9'
 SLUG_RE = re.compile('^['+SLUG_CHARS+']+$')
 
