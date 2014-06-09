@@ -7,10 +7,11 @@ from yadda.models import App
 import json
 import sys
 
-def args(cmds, common):
+def args(cmd, subparse, common):
     'show or adjust the application environment'
-    p = cmds.add_parser('env', parents=[common], help=args.__doc__,
-                        description=args.__doc__.capitalize())
+    p = subparse.add_parser(cmd, parents=[common], help=args.__doc__,
+                            description=args.__doc__.capitalize())
+    p.set_defaults(cmd=cmd)
     vs = p.add_subparsers(title='Variants')
 
     show = vs.add_parser('show', parents=[common], help=run_show.__doc__,
@@ -38,18 +39,13 @@ def args(cmds, common):
     hist = vs.add_parser('history', parents=[common],
                          help='show changes to the environment over time')
     hist.set_defaults(func=run_history)
-    return p
 
-def get_app(opts):
-    if opts.app is None:
-        opts.app = git.get_yadda_app()
-    return App.load(opts.app)
+    return p
 
 def run_show(opts):
     'list the values of variables in the environment'
-    app = get_app(opts)
     i = opts.revision-1 if opts.revision else -1
-    FORMATS[opts.format](app.envs[i].env)
+    FORMATS[opts.format](opts.app.envs[i].env)
 
 def show_sh(e):
     for k, v in e.iteritems():
@@ -73,29 +69,26 @@ FORMATS={'sh': show_sh,
          'human': show_human}
 
 def run_history(opts):
-    app = get_app(opts)
-    if not app.envs:
+    if not opts.app.envs:
         print('No environments')
     else:
-        for e in app.envs:
+        for e in opts.app.envs:
             print(e.version() + ': ' + e.history)
 
 def run_set(opts):
     'add new bindings to the environment and redeploy'
-    app = get_app(opts)
-    e = copy(app.envs[-1])
+    e = copy(opts.app.envs[-1])
     for b in opts.bindings:
         e = e.set(b[0], b[1])
     e.freeze()
-    app.save()
+    opts.app.save()
     print(e.version() + ': ' + e.history)
 
 def run_rm(opts):
     'remove bindings from the environment and redeploy'
-    app = get_app(opts)
-    e = copy(app.envs[-1])
+    e = copy(opts.app.envs[-1])
     for v in opts.variables:
         e = e.rm(v)
     e.freeze()
-    app.save()
+    opts.app.save()
     print(e.version() + ': ' + e.history)

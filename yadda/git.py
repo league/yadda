@@ -14,5 +14,8 @@ def set_yadda_app(opts, name):
     utils.dry_call(opts, ['git', 'config', '--local', 'yadda.app', name])
 
 def get_yadda_app():
-    return subprocess.check_output(['git', 'config', '--local',
-                                    'yadda.app']).rstrip()
+    try:
+        return subprocess.check_output(['git', 'config', '--local',
+                                        'yadda.app']).rstrip()
+    except subprocess.CalledProcessError:
+        raise KeyError

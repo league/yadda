@@ -1,22 +1,71 @@
 # yadda.main ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-from yadda import version
-from yadda.models import Role
-from yadda.utils import say, show_opts
+from yadda import version, git, settings
+from yadda.commands import init
+from yadda.models import Role, App
+from yadda.utils import say, die, show_opts, say_call
 import argparse
 import pkgutil
 import sys
 import yadda.commands
 
-def run(opts):
-    opts.func(opts)
+def main(argv=None):
+    """Top-level entry point for the yadda program.
 
-def main(argv=None, run=run):
+    We parse the command-line arguments, load the current app data (if
+    available), and then invoke the sub-command or log in to a remote target to
+    reinvoke this command.
+
+    """
+    if argv is None:
+        argv = sys.argv[1:]
+    opts = args().parse_args(argv)
+    if opts.dry_run and not opts.verbose:
+        opts.verbose = 1
+    assert(hasattr(opts, 'cmd'))  # Verify the sub-command parsers added
+    assert(hasattr(opts, 'func')) # the correct attributes
+    say(opts, opts, show=show_opts, level=2)
+
+    if opts.cmd == 'init': init.pre_run(opts)
+    else: dispatch(opts)
+
+def dispatch(opts):
+    """Load the app context, and run sub-command on designated target."""
+    if not opts.app:            # If not provided on command-line,
+        try:                    # Look in .git/config
+            say(opts, 'Loading app name from .git/config')
+            opts.app = git.get_yadda_app()
+        except KeyError:
+            die('app name not specified in .git/config; did you init?')
+    try:
+        opts.app = App.load(opts.app)
+    except KeyError:
+        die('"%s" not found in %s; retry init?' %
+            (opts.app, settings.DATA_FILE))
+
+    if opts.target == opts.app.role: # We're in the right place
+        opts.func(opts)
+    else:
+        host = getattr(opts.app, opts.target)
+        if not host:
+            die('%s does not specify %s host; try init again?' %
+                (opts.app.name, opts.target))
+        print(['ssh', host, 'yadda'] + argv)
+
+def args():
+    """Specify command-line argument specification for entire program.
+
+    Modules within the `yadda.commands` package add sub-commands by providing a
+    function args(CMD, SUBPARSE, COMMON). That function should add a parser to
+    SUBPARSE, and set the `cmd` attribute to the sub-command name (CMD) and set
+    the `func` attribute to a callback to implement that sub-command.
+
+    """
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument('-n', '--dry-run', action='store_true',
-                        help='perform a trial run without making changes')
-    common.add_argument('-v', '--verbose', action='store_true',
+                        help='perform a trial run without making changes (implies -v)')
+    common.add_argument('-v', '--verbose', action='count',
                         help='increase output about what is happening')
     common.add_argument('-a', '--app', metavar='NAME',
                         help='application on which to operate')
@@ -30,9 +79,7 @@ def main(argv=None, run=run):
     for imp, cmd, pkg in pkgutil.iter_modules(yadda.commands.__path__):
         if not pkg:
             m = imp.find_module(cmd).load_module(cmd)
-            m.args(subparse, common)
-    opts = ap.parse_args(sys.argv[1:] if argv is None else argv)
-    say(opts, opts, show=show_opts)
-    return run(opts)
+            m.args(cmd, subparse, common)
+    return ap
 
 if __name__ == '__main__': main()

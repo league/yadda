@@ -52,13 +52,13 @@ def say1(line, out=sys.stdout):
     out.write(line)
     out.write('\n')
 
-def say(opts, mesg, show=None, out=sys.stdout):
+def say(opts, mesg, show=None, out=sys.stdout, level=1):
     """Write `mesg` to `out`, if verbose option is set
 
     Mesg can be a one-line string, or an arbitrary object if `show` is provided.
     The show function is expected to generate a sequence of one-line strings,
     when applied to the `mesg` object."""
-    if opts.verbose:
+    if opts.verbose >= level:
         if show:
             for line in show(mesg):
                 say1(line, out)
@@ -71,11 +71,18 @@ def sayf(opts, fmt, *args):
         say1(fmt.format(*args), sys.stdout)
         sys.stdout.flush()
 
+def say_call(opts, cmd, call=subprocess.check_call, **kwargs):
+    mesg = ' '.join(cmd) if type(cmd) == list else cmd
+    say(opts, mesg)
+    return call(cmd, **kwargs)
+
 def dry_call(opts, cmd, call=subprocess.check_call, **kwargs):
     mesg = ' '.join(cmd) if type(cmd) == list else cmd
     return dry_guard(opts, mesg, call, cmd, **kwargs)
 
 def dry_guard(opts, mesg, f, *args, **kwargs):
-    say(opts, mesg)
-    if not opts.dry_run:
+    if opts.dry_run:
+        say(opts, '(not) ' + mesg)
+    else:
+        say(opts, mesg)
         return f(*args, **kwargs)
