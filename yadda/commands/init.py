@@ -18,7 +18,7 @@ def pre_run(opts):
         say_call(opts, ['ssh', opts.qa, 'yadda', 'init', '-t', Role.qa] +
                  opts_to_list(opts))
     elif opts.target == Role.qa and opts.live:
-        say_call(opts, ['ssh', opts.qa, 'yadda', 'init', '-t', Role.live] +
+        say_call(opts, ['ssh', opts.live, 'yadda', 'init', '-t', Role.live] +
                  opts_to_list(opts))
 
 def opts_to_list(opts):
