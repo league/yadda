@@ -24,3 +24,6 @@ class GitTest(caseutils.GitWorkDirCase):
     def test_yadda_app_config(self):
         git.set_yadda_app(self.opts, self.name)
         self.assertEqual(git.get_yadda_app(), self.name)
+
+    def test_get_app_key_error(self):
+        self.assertRaises(KeyError, git.get_yadda_app)
