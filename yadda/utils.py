@@ -46,9 +46,9 @@ def show_opts(opts):
         if not str(v).startswith('<'):
             yield 'option %-*s = %s' % (w, k, v)
 
-def say1(line, out=sys.stdout):
+def say1(opts, line, out=sys.stdout):
     "Write one-line message to `out`, with newline"
-    out.write('» ')
+    out.write('%-4s» ' % opts.target)
     out.write(line)
     out.write('\n')
 
@@ -61,14 +61,14 @@ def say(opts, mesg, show=None, out=sys.stdout, level=1):
     if opts.verbose >= level:
         if show:
             for line in show(mesg):
-                say1(line, out)
+                say1(opts, line, out)
         else:
-            say1(mesg, out)
+            say1(opts, mesg, out)
         out.flush()
 
 def sayf(opts, fmt, *args):
     if opts.verbose:
-        say1(fmt.format(*args), sys.stdout)
+        say1(opts, fmt.format(*args), sys.stdout)
         sys.stdout.flush()
 
 def say_call(opts, cmd, call=subprocess.check_call, **kwargs):
