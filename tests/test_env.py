@@ -1,8 +1,10 @@
 # test_env ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
+from caseutils import *
 from yadda import utils, main
-from yadda.models import Role
+from yadda.commands.env import *
+from yadda.models import Role, App, Env
 import unittest
 
 class EnvOptionsTest(unittest.TestCase):
@@ -52,3 +54,26 @@ class EnvOptionsTest(unittest.TestCase):
 
     def test_rm_needs_var(self):
         self.assertRaises(SystemExit, main.main, ['env', 'rm'])
+
+class EnvRunTest(TmpDirCase, AppNameCase):
+    def setUp(self):
+        super(EnvRunTest, self).setUp()
+        self.app = App(self.name)
+        Env(self.app).freeze()
+        self.app.save()
+
+    def test_env_ls(self):
+        main.main(['-a', self.name, 'env', 'ls'])
+
+    def test_env_ls_formats(self):
+        for f in FORMATS:
+            main.main(['-a', self.name, 'env', 'ls', '-f', f])
+
+    def test_env_log(self):
+        main.main(['-a', self.name, 'env', 'log'])
+
+    def test_env_set(self):
+        main.main(['-a', self.name, 'env', 'set', '-n', 'BAZ=223'])
+
+    def test_env_rm(self):
+        main.main(['-a', self.name, 'env', 'rm', '-n', 'BAZ'])

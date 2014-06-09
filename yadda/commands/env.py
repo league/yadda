@@ -69,11 +69,8 @@ FORMATS={'sh': show_sh,
          'human': show_human}
 
 def run_log(opts):
-    if not opts.app.envs:
-        print('No environments')
-    else:
-        for e in opts.app.envs:
-            print(e.version() + ': ' + e.history)
+    for e in opts.app.envs:
+        print(e.version() + ': ' + e.history)
 
 def run_set(opts):
     'add new bindings to the environment and redeploy'
