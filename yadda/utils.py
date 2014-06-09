@@ -13,9 +13,6 @@ def die(mesg):
     sys.stderr.write("\n")
     exit(1)
 
-def id(x):
-    return x
-
 SLUG_CHARS = '-_a-z0-9'
 SLUG_RE = re.compile('^['+SLUG_CHARS+']+$')
 
@@ -35,7 +32,6 @@ def binding_arg(s):
     if m:
         return (m.group(1), m.group(2))
     raise argparse.ArgumentTypeError("must match VAR=VALUE pattern")
-
 
 def show_opts(opts):
     "Output generator for an options namespace"
