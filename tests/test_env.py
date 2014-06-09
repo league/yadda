@@ -77,3 +77,18 @@ class EnvRunTest(TmpDirCase, AppNameCase):
 
     def test_env_rm(self):
         main.main(['-a', self.name, 'env', 'rm', '-n', 'BAZ'])
+
+class EnvGitRunTest(GitWorkDirCase, AppNameCase):
+
+    def setUp(self):
+        super(EnvGitRunTest, self).setUp()
+
+    def test_env_app_not_in_git(self):
+        self.assertRaises(SystemExit, main.main, ['env', 'ls'])
+
+    def test_env_not_in_file(self):
+        self.assertRaises(SystemExit, main.main, ['env', 'ls', '-a', self.name[:8]])
+
+    def test_env_dispatch(self):
+        main.main(['init', self.name])
+        main.main(['env', 'ls'])
