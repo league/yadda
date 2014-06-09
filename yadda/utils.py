@@ -74,7 +74,10 @@ def sayf(opts, fmt, *args):
 def say_call(opts, cmd, call=subprocess.check_call, **kwargs):
     mesg = ' '.join(cmd) if type(cmd) == list else cmd
     say(opts, mesg)
-    return call(cmd, **kwargs)
+    try:
+        return call(cmd, **kwargs)
+    except subprocess.CalledProcessError as exn:
+        die('command returned non-zero exit status: %d' % exn.returncode)
 
 def dry_call(opts, cmd, call=subprocess.check_call, **kwargs):
     mesg = ' '.join(cmd) if type(cmd) == list else cmd
