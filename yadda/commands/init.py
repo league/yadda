@@ -29,7 +29,7 @@ def opts_to_list(opts):
             new_opts.append(opts.live)
     if opts.dry_run: new_opts.append('-n')
     if opts.verbose: new_opts.append('-' + 'v' * opts.verbose)
-    if opts.db: new_opts.append('-d')
+    if opts.database: new_opts.append('-d')
     if opts.subdir:
         new_opts.append('-C')
         new_opts.append(opts.subdir)
@@ -54,7 +54,7 @@ def run(opts):
     change = False
     try:
         app = App.load(opts.name)
-        for av in 'role qa live subdir db'.split():
+        for av in 'role qa live subdir database'.split():
             ov = 'target' if av == 'role' else av
             if getattr(opts, ov) != getattr(app, av):
                 txt = av+' host' if av in Role.all else av
@@ -66,7 +66,7 @@ def run(opts):
         change = True
         sayf(opts, 'Creating app {} on {}', opts.name, opts.target)
         app = App(opts.name, role=opts.target, qa=opts.qa, live=opts.live,
-                  subdir=opts.subdir, db=opts.db)
+                  subdir=opts.subdir, database=opts.database)
         Env(app).freeze()
     if change:
         app.maybe_save(opts)

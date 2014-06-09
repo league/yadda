@@ -19,7 +19,7 @@ class Role(object):
 
 class App(object):
     def __init__(self, name, role=Role.dev, qa=None, live=None,
-                 subdir=None, db=None):
+                 subdir=None, database=None):
         assert(isinstance(name, str))
         assert(role in Role.all)
         self.name = name
@@ -27,7 +27,7 @@ class App(object):
         self.qa = qa
         self.live = live
         self.subdir = subdir
-        self.db = db
+        self.database = database
         self.envs = []
         self.builds = []
         self.releases = []
