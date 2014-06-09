@@ -18,7 +18,7 @@ def main(argv=None, run=run):
                         help='perform a trial run without making changes')
     common.add_argument('-v', '--verbose', action='store_true',
                         help='increase output about what is happening')
-    common.add_argument('-a', '--app', nargs=1, metavar='NAME',
+    common.add_argument('-a', '--app', metavar='NAME',
                         help='application on which to operate')
     common.add_argument('-t', '--target', choices=Role.all, default=Role.dev,
                         help='host on which to run this command')

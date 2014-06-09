@@ -24,7 +24,7 @@ class EnvOptionsTest(unittest.TestCase):
 
     def test_show_ok(self):
         opts = main(['env', 'show'], utils.id)
-        self.assertEqual(opts.revision, 1)
+        self.assertEqual(opts.revision, None)
 
     def test_target_first(self):
         opts = main(['-t', Role.qa, 'env', 'show'], utils.id)
@@ -39,7 +39,7 @@ class EnvOptionsTest(unittest.TestCase):
 
     def test_set_ok(self):
         opts = main(['env', 'set', 'FOO=123', 'BAR=abc'], utils.id)
-        self.assertEqual(opts.bindings, ['FOO=123', 'BAR=abc'])
+        self.assertEqual(opts.bindings, [('FOO', '123'), ('BAR', 'abc')])
 
     def test_set_needs_binding(self):
         self.assertRaises(SystemExit, main, ['env', 'set'], utils.id)

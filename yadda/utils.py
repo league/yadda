@@ -25,9 +25,17 @@ def is_slug(s):
 def slug_arg(s):
     "Type checker for a URL-safe slug"
     if is_slug(s): return s
-    import argparse
     raise argparse.ArgumentTypeError\
         ("must contain characters only from -_a-z0-9")
+
+BINDING_RE = re.compile('^([-_a-zA-Z0-9]+)=(.*)$')
+
+def binding_arg(s):
+    m = BINDING_RE.match(s)
+    if m:
+        return (m.group(1), m.group(2))
+    raise argparse.ArgumentTypeError("must match VAR=VALUE pattern")
+
 
 def show_opts(opts):
     "Output generator for an options namespace"
@@ -57,6 +65,11 @@ def say(opts, mesg, show=None, out=sys.stdout):
         else:
             say1(mesg, out)
         out.flush()
+
+def sayf(opts, fmt, *args):
+    if opts.verbose:
+        say1(fmt.format(*args), sys.stdout)
+        sys.stdout.flush()
 
 def dry_call(opts, cmd, call=subprocess.check_call, **kwargs):
     mesg = ' '.join(cmd) if type(cmd) == list else cmd

@@ -13,6 +13,9 @@ class Role(object):
     qa = 'qa'
     live = 'live'
     all = [dev, qa, live]
+    description = {dev: 'development',
+                   qa: 'staging',
+                   live: 'production'}
 
 class App(object):
     def __init__(self, name, role=Role.dev, qa=None, live=None):
@@ -44,6 +47,11 @@ class App(object):
             assert(isinstance(app, App))
             return app
 
+    @staticmethod
+    def list(file=settings.DATA_FILE):
+        with closing(shelve.open(file)) as sh:
+            return sh.keys()
+
 class AppComponent(object):
     def __init__(self, app, ls=None):
         assert(isinstance(app, App))
@@ -53,7 +61,7 @@ class AppComponent(object):
 
     def insert_into(self, ls):
         self.serial = App.next_serial(ls)
-        ls.insert(0, self)
+        ls.append(self)
 
     def version(self):
         return self.app.role + '.' + (str(self.serial) if self.serial else '??')
@@ -64,28 +72,33 @@ class Env(AppComponent):
         self.frozen = False
         self.serial = None
         self.env = {'YADDA': version.full}
+        self.history = ['initial environment']
 
     def __copy__(self):
         assert(self.frozen)
         e = Env(self.app)
         e.env = copy(self.env)
+        e.history = []
         return e
 
     def set(self, k, v):
         e = copy(self) if self.frozen else self
         e.env[k] = v
+        e.history.append('set ' + k)
         return e
 
     def rm(self, k):
         e = copy(self) if self.frozen else self
         if k in e.env:
             del e.env[k]
+            e.history.append('rm ' + k)
         return e
 
     def freeze(self):
         if not self.frozen:
             self.frozen = self.checksum()
             self.timestamp = datetime.now()
+            self.history = ', '.join(self.history)
             self.insert_into(self.app.envs)
         return self
 
