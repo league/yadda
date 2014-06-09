@@ -1,8 +1,11 @@
 # test_models ▪ Test the model classes ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-import unittest
+from tempfile import mkdtemp
 from yadda.models import Role, App, Env, Build, Release
+import argparse
+import os
+import unittest
 
 def mkEnv(app):
     "Standardize the version number, so we can verify checksum."
@@ -112,23 +115,37 @@ class PickleModelsTest(ReleaseTestSetup):
             self.assertEqual(self.b, x.app)
 
 class SaveLoadTest(ReleaseTestSetup):
-    def test_save_load(self):
-        from tempfile import mkdtemp
-        import os
-        d = mkdtemp()
-        f = os.path.join(d, 'mydb')
-        print("Using file "+f)
+    def setUp(self):
+        super(SaveLoadTest, self).setUp()
+        self.dir = mkdtemp()
+        self.file = os.path.join(self.dir, 'mydb')
+        self.opts = argparse.Namespace(dry_run=True, verbose=1,
+                                       target=Role.dev)
+
+    def tearDown(self):
+        super(SaveLoadTest, self).tearDown()
         try:
-            self.a.save(f)
-            self.b = App.load(self.a.name, f)
-            self.assertNotEqual(self.a, self.b)
-            self.assertEqual(self.a.name, self.b.name)
-            self.assertEqual(self.a.role, self.b.role)
-            self.assertEqual(len(self.a.envs), len(self.b.envs))
-            self.assertEqual(len(self.a.builds), len(self.b.builds))
-            self.assertEqual(len(self.a.releases), len(self.b.releases))
-            for x in self.b.envs + self.b.builds + self.b.releases:
-                self.assertEqual(self.b, x.app)
-        finally:
-            os.unlink(f)
-            os.rmdir(d)
+            os.unlink(self.file)
+        except:
+            pass
+        os.rmdir(self.dir)
+
+    def test_save_load(self):
+        self.a.save(self.file)
+        self.b = App.load(self.a.name, self.file)
+        self.assertNotEqual(self.a, self.b)
+        self.assertEqual(self.a.name, self.b.name)
+        self.assertEqual(self.a.role, self.b.role)
+        self.assertEqual(len(self.a.envs), len(self.b.envs))
+        self.assertEqual(len(self.a.builds), len(self.b.builds))
+        self.assertEqual(len(self.a.releases), len(self.b.releases))
+        for x in self.b.envs + self.b.builds + self.b.releases:
+            self.assertEqual(self.b, x.app)
+
+    def test_list_apps(self):
+        self.a.save(self.file)
+        self.assertEqual(App.list(self.file), [self.a.name])
+
+    def test_dry_save(self):
+        self.a.maybe_save(self.opts, self.file)
+        self.assertFalse(os.path.isfile(self.file))

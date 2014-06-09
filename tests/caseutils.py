@@ -21,4 +21,4 @@ class GitWorkDirCase(TmpDirCase):
 
     def setUp(self):
         super(GitWorkDirCase, self).setUp()
-        subprocess.check_call(['git', 'init'])
+        subprocess.check_call(['git', 'init', '-q'])

@@ -36,8 +36,8 @@ class App(object):
         with closing(shelve.open(file)) as sh:
             sh[self.name] = self
 
-    def maybe_save(self, opts):
-        utils.dry_guard(opts, 'saving app data', self.save)
+    def maybe_save(self, opts, file=settings.DATA_FILE):
+        utils.dry_guard(opts, 'saving app data', self.save, file)
 
     @staticmethod
     def next_serial(xs):
