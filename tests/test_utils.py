@@ -37,22 +37,27 @@ class ShowOptsTest(unittest.TestCase):
         self.assertRaises(StopIteration, g.next)
 
 class SayTest(unittest.TestCase):
+
+    def setUp(self):
+        self.opts = Namespace(verbose=True, target='dev')
+
     def test_say1(self):
         with closing(StringIO()) as out:
-            say1('hello', out=out)
-            self.assertEqual('» hello\n', out.getvalue())
+            say1(self.opts, 'hello', out=out)
+            self.assertEqual('dev  » hello\n', out.getvalue())
 
     def test_quiet_say(self):
+        self.opts.verbose = False
         with closing(StringIO()) as out:
             say(Namespace(verbose=False), 'hello', out=out)
             self.assertEqual('', out.getvalue())
 
     def test_verbose_say(self):
         with closing(StringIO()) as out:
-            say(Namespace(verbose=True), 'hello', out=out)
-            self.assertEqual('» hello\n', out.getvalue())
+            say(self.opts, 'hello', out=out)
+            self.assertEqual('dev  » hello\n', out.getvalue())
 
     def test_say_generator(self):
         with closing(StringIO()) as out:
-            say(Namespace(verbose=True), ['a','b'], lambda x: x, out=out)
-            self.assertEqual('» a\n» b\n', out.getvalue())
+            say(self.opts, ['a','b'], lambda x: x, out=out)
+            self.assertEqual('dev  » a\ndev  » b\n', out.getvalue())
