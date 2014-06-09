@@ -29,12 +29,20 @@ def opts_to_list(opts):
             new_opts.append(opts.live)
     if opts.dry_run: new_opts.append('-n')
     if opts.verbose: new_opts.append('-' + 'v' * opts.verbose)
+    if opts.db: new_opts.append('-d')
+    if opts.subdir:
+        new_opts.append('-C')
+        new_opts.append(opts.subdir)
     return new_opts
 
 def args(cmd, subparse, common):
     p = subparse.add_parser(cmd, parents=[common],
                             help='initialize a new application',
                             description='Initialize a new application')
+    p.add_argument('-d', '--database', action='store_true',
+                   help='link container with database')
+    p.add_argument('-C', '--subdir', metavar='SUBDIR',
+                   help='change to SUBDIR before building')
     p.add_argument('name', metavar='NAME', type=slug_arg,
                    help='name of the app to initialize')
     for r in Role.all[1:]:
@@ -46,22 +54,19 @@ def run(opts):
     change = False
     try:
         app = App.load(opts.name)
-        if opts.target != app.role:
-            sayf(opts, 'changing {} role to {}', opts.name, opts.target)
-            app.role = opts.target
-            change = True
-        if opts.qa and opts.qa != app.qa:
-            sayf(opts, 'changing {} qa host to {}', opts.name, opts.qa)
-            app.qa = opts.qa
-            change = True
-        if opts.live and opts.live != app.live:
-            sayf(opts, 'changing {} live host to {}', opts.name, opts.live)
-            app.live = opts.live
-            change = True
+        for av in 'role qa live subdir db'.split():
+            ov = 'target' if av == 'role' else av
+            if getattr(opts, ov) != getattr(app, av):
+                txt = av+' host' if av in Role.all else av
+                sayf(opts, 'changing {} {} to {}', opts.name, txt,
+                     getattr(opts, ov))
+                setattr(app, av, getattr(opts, ov))
+                change = True
     except KeyError:
         change = True
         sayf(opts, 'Creating app {} on {}', opts.name, opts.target)
-        app = App(opts.name, opts.target, opts.qa, opts.live)
+        app = App(opts.name, role=opts.target, qa=opts.qa, live=opts.live,
+                  subdir=opts.subdir, db=opts.db)
         Env(app).freeze()
     if change:
         app.maybe_save(opts)

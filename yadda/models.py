@@ -18,13 +18,16 @@ class Role(object):
                    live: 'production'}
 
 class App(object):
-    def __init__(self, name, role=Role.dev, qa=None, live=None):
+    def __init__(self, name, role=Role.dev, qa=None, live=None,
+                 subdir=None, db=None):
         assert(isinstance(name, str))
         assert(role in Role.all)
         self.name = name
         self.role = role
         self.qa = qa
         self.live = live
+        self.subdir = subdir
+        self.db = db
         self.envs = []
         self.builds = []
         self.releases = []
