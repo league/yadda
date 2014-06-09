@@ -2,6 +2,8 @@
 # ©2014 Christopher League <league@contrapunctus.net>
 
 import argparse
+import errno
+import os
 import re
 import subprocess
 import sys
@@ -86,3 +88,12 @@ def dry_guard(opts, mesg, f, *args, **kwargs):
     else:
         say(opts, mesg)
         return f(*args, **kwargs)
+
+def force_symlink(file1, file2):
+    'Simulate `ln -sf`, replacing `file2` if it exists already.'
+    try:
+        os.symlink(file1, file2)
+    except OSError, e:
+        if e.errno == errno.EEXIST:
+            os.remove(file2)
+            os.symlink(file1, file2)

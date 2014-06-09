@@ -73,4 +73,9 @@ def run(opts):
         else:
             print('Note: could not save app name to .git/config')
     elif opts.target == Role.qa:
-        git.init_bare(opts, app.name + '.git')
+        d = app.name + '.git'
+        git.init_bare(opts, d)
+        hook = os.path.join(d, os.path.join('hooks', 'pre-receive'))
+        exe = os.path.realpath(sys.argv[0])
+        dry_guard(opts, 'symlink %s -> %s' % (hook, exe),
+                  force_symlink, exe, hook)
