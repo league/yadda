@@ -48,7 +48,8 @@ def show_opts(opts):
 
 def say1(opts, line, out=sys.stdout):
     "Write one-line message to `out`, with newline"
-    out.write('%-4s» ' % opts.target)
+    out.write('%-5s» ' % (opts.dispatch if hasattr(opts,'dispatch')
+                          else opts.target))
     out.write(line)
     out.write('\n')
 

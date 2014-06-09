@@ -64,4 +64,4 @@ def run(opts):
         app = App(opts.name, opts.target, opts.qa, opts.live)
         Env(app).freeze()
     if change:
-        dry_guard(opts, 'saving app data', app.save)
+        app.maybe_save(opts)

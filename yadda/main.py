@@ -28,9 +28,10 @@ def main(argv=None):
     say(opts, opts, show=show_opts, level=2)
 
     if opts.cmd == 'init': init.pre_run(opts)
-    else: dispatch(opts)
+    else: dispatch(opts, argv)
 
-def dispatch(opts):
+def dispatch(opts, argv):
+    opts.dispatch = ''
     """Load the app context, and run sub-command on designated target."""
     if not opts.app:            # If not provided on command-line,
         try:                    # Look in .git/config
@@ -40,18 +41,22 @@ def dispatch(opts):
             die('app name not specified in .git/config; did you init?')
     try:
         opts.app = App.load(opts.app)
+        opts.dispatch = opts.app.role
     except KeyError:
         die('"%s" not found in %s; retry init?' %
             (opts.app, settings.DATA_FILE))
 
     if opts.target == opts.app.role: # We're in the right place
+        del opts.dispatch
         opts.func(opts)
     else:
         host = getattr(opts.app, opts.target)
         if not host:
             die('%s does not specify %s host; try init again?' %
                 (opts.app.name, opts.target))
-        print(['ssh', host, 'yadda'] + argv)
+        argv.append('--app')
+        argv.append(opts.app.name)
+        say_call(opts, ['ssh', host, 'yadda'] + argv)
 
 def args():
     """Specify command-line argument specification for entire program.

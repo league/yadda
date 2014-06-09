@@ -4,7 +4,7 @@
 from contextlib import closing
 from copy import copy
 from datetime import datetime
-from yadda import version, settings
+from yadda import version, settings, utils
 import hashlib
 import shelve
 
@@ -35,6 +35,9 @@ class App(object):
     def save(self, file=settings.DATA_FILE):
         with closing(shelve.open(file)) as sh:
             sh[self.name] = self
+
+    def maybe_save(self, opts):
+        utils.dry_guard(opts, 'saving app data', self.save)
 
     @staticmethod
     def next_serial(xs):

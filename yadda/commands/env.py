@@ -81,7 +81,7 @@ def run_set(opts):
     for b in opts.bindings:
         e = e.set(b[0], b[1])
     e.freeze()
-    opts.app.save()
+    opts.app.maybe_save(opts)
     print(e.version() + ': ' + e.history)
 
 def run_rm(opts):
@@ -90,5 +90,5 @@ def run_rm(opts):
     for v in opts.variables:
         e = e.rm(v)
     e.freeze()
-    opts.app.save()
+    opts.app.maybe_save(opts)
     print(e.version() + ': ' + e.history)
