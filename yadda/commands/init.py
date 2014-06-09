@@ -65,3 +65,7 @@ def run(opts):
         Env(app).freeze()
     if change:
         app.maybe_save(opts)
+    if git.has_dot_git():
+        git.set_yadda_app(opts, app.name)
+    elif opts.target == Role.dev:
+        print('Note: could not save app name to .git/config')
