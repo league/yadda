@@ -93,10 +93,6 @@ def dry_guard(opts, mesg, f, *args, **kwargs):
         say(opts, '(not) ' + mesg)
     else:
         say(opts, mesg)
-        # Hook to avoid executing docker during unit tests
-        if(os.environ.get('YADDA_TEST_BAN') == settings.DOCKER and
-           mesg.startswith(settings.DOCKER)):
-            return
         return f(*args, **kwargs)
 
 def force_symlink(file1, file2):

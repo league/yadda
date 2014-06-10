@@ -5,9 +5,10 @@ from datetime import datetime
 from uuid import uuid4 as uuid
 from yadda.models import Build
 from yadda.settings import HASH_ABBREV, DOCKER
-from yadda.utils import save_cwd, dry_call
+from yadda.utils import save_cwd, dry_call, die
 import os
 import subprocess
+import sys
 import tempfile
 
 def build(opts, b):
@@ -20,12 +21,21 @@ def build(opts, b):
         log = os.path.join(tempfile.gettempdir(),
                            '%s.%s' % (t, uuid().hex[:HASH_ABBREV]))
         b.build_log = ''
+        b.build_status = None
         try:
-            dry_call(opts, '%s build -t %s . | tee %s' %
-                     (DOCKER, t, log), shell=True)
+            # Hook to avoid executing docker during unit tests
+            if os.environ.get('YADDA_TEST_BAN') == DOCKER: return
+            p1 = subprocess.Popen([DOCKER, 'build', '-t', t, '.'],
+                                  stdout=subprocess.PIPE)
+            p2 = subprocess.Popen(['tee', log],
+                                  stdin=p1.stdout,
+                                  stdout=sys.stdout)
+            p1.stdout.close()
+            p2.communicate()
+            b.build_status = p1.wait()
             with open(log, 'r') as h:
                 b.build_log = h.read()
-        except IOError:         # log was probably not written
+        except IOError:         # log was probably not written; ignore
             pass
         finally:
             b.build_finish = datetime.now()
@@ -34,3 +44,5 @@ def build(opts, b):
                 os.unlink(log)
             except OSError:
                 pass
+            if b.build_status != 0:
+                die('docker build failure: ' + str(b.build_status))
