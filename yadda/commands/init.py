@@ -1,7 +1,7 @@
 # yadda.commands.init ▪ Initialize a new application ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-from yadda import git
+from yadda import git, settings
 from yadda.models import Role, App, Env
 from yadda.utils import *
 import os
@@ -15,10 +15,10 @@ def pre_run(opts):
     """
     opts.func(opts)         # Run locally
     if opts.target == Role.dev and opts.qa:
-        say_call(opts, ['ssh', opts.qa, 'yadda', 'init', '-t', Role.qa] +
+        say_call(opts, [settings.SSH, opts.qa, 'yadda', 'init', '-t', Role.qa] +
                  opts_to_list(opts))
     elif opts.target == Role.qa and opts.live:
-        say_call(opts, ['ssh', opts.live, 'yadda', 'init', '-t', Role.live] +
+        say_call(opts, [settings.SSH, opts.live, 'yadda', 'init', '-t', Role.live] +
                  opts_to_list(opts))
 
 def opts_to_list(opts):

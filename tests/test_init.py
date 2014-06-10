@@ -8,6 +8,9 @@ from yadda.models import App
 import argparse
 
 class InitTest(GitWorkDirCase, AppNameCase):
+    def setUp(self):
+        super(InitTest, self).setUp()
+        os.environ['YADDA_TEST_BAN'] = settings.SSH
 
     def test_basic_init(self):
         main(['init', '-n', self.name])

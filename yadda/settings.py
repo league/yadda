@@ -7,3 +7,5 @@ from os.path import join
 DATA_FILE = join(environ['HOME'], '.yadda.data')
 
 HASH_ABBREV = 5
+SSH = 'ssh'
+DOCKER = 'docker'

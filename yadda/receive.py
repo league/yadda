@@ -10,8 +10,8 @@ import os
 import subprocess
 import sys
 
-def run():
-    commit = git.receive_master_commit()
+def run(home=os.environ['HOME'], input=sys.stdin):
+    commit = git.receive_master_commit(input)
     if not commit:
         print('Note: No update to master')
         sys.exit(0)
@@ -22,7 +22,7 @@ def run():
         die('Warning: app %s not configured, cannot deploy' % name)
 
     opts = argparse.Namespace(verbose=1, dry_run=False, target=app.role)
-    workdir = os.path.join(os.environ['HOME'], '%s-%s' %
+    workdir = os.path.join(home, '%s-%s' %
                            (name, commit[:HASH_ABBREV]))
     if not os.path.isdir(workdir): os.mkdir(workdir)
     b = Build(app, commit, workdir=workdir)

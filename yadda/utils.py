@@ -1,6 +1,7 @@
 # yadda.utils ▪ Various utility functions ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
+from yadda import settings
 import argparse
 import errno
 import os
@@ -74,6 +75,11 @@ def say_call(opts, cmd, call=subprocess.check_call, **kwargs):
     mesg = ' '.join(cmd) if type(cmd) == list else cmd
     say(opts, mesg)
     try:
+        # Hook to avoid executing ssh during unit tests
+        if(os.environ.get('YADDA_TEST_BAN') == settings.SSH and
+           isinstance(cmd, list) and
+           cmd[0] == settings.SSH):
+            return
         return call(cmd, **kwargs)
     except subprocess.CalledProcessError as exn:
         die('command returned non-zero exit status: %d' % exn.returncode)
@@ -87,6 +93,10 @@ def dry_guard(opts, mesg, f, *args, **kwargs):
         say(opts, '(not) ' + mesg)
     else:
         say(opts, mesg)
+        # Hook to avoid executing docker during unit tests
+        if(os.environ.get('YADDA_TEST_BAN') == settings.DOCKER and
+           mesg.startswith(settings.DOCKER)):
+            return
         return f(*args, **kwargs)
 
 def force_symlink(file1, file2):

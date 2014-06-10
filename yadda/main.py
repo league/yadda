@@ -61,7 +61,7 @@ def dispatch(opts, argv):
                 (opts.app.name, opts.target))
         argv.append('--app')
         argv.append(opts.app.name)
-        say_call(opts, ['ssh', host, 'yadda'] + argv)
+        say_call(opts, [settings.SSH, host, 'yadda'] + argv)
 
 def args():
     """Specify command-line argument specification for entire program.
