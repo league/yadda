@@ -1,9 +1,10 @@
 # yadda.docker ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-import os
 from yadda.models import Build
 from yadda.utils import save_cwd, dry_call
+import os
+import subprocess
 
 def build(opts, b):
     assert(isinstance(b, Build))
