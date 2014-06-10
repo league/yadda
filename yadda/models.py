@@ -130,8 +130,8 @@ class Env(AppComponent):
         return buf
 
 class Build(AppComponent):
-    def __init__(self, app, git_hash):
-        super(Build,self).__init__(app, app.builds, workdir=None)
+    def __init__(self, app, git_hash, workdir=None):
+        super(Build,self).__init__(app, app.builds)
         self.git_hash = git_hash
         self.image_id = None
         self.build_loc = app.role
