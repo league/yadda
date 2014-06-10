@@ -19,7 +19,7 @@ def run():
     except KeyError:
         die('Warning: app %s not configured, cannot deploy' % name)
     commit = c[:5]
-    workdir = os.path.join(os.environ['HOME'], '%s-%s' % (label, commit))
+    workdir = os.path.join(os.environ['HOME'], '%s-%s' % (name, commit))
     b = Build(app, c, workdir=workdir)
     app.save()
     print('Starting build ' + b.tag() + ' in ' + workdir)
