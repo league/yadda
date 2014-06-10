@@ -3,6 +3,7 @@
 
 from yadda import git
 from yadda.utils import die
+from yadda.models import App, Build
 import os
 import subprocess
 import sys
