@@ -34,3 +34,7 @@ def run(home=os.environ['HOME'], input=sys.stdin):
         shell=True
     )
     docker.build(opts, b)
+
+    r = Release(b, b.app.envs[-1])
+    b.app.save()
+    sayf(opts, 'Created %s' % r)
