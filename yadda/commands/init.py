@@ -27,9 +27,12 @@ def opts_to_list(opts):
         new_opts.append(opts.qa)
         if opts.live:
             new_opts.append(opts.live)
-    if opts.dry_run: new_opts.append('-n')
-    if opts.verbose: new_opts.append('-' + 'v' * opts.verbose)
-    if opts.database: new_opts.append('-d')
+    if opts.dry_run:
+        new_opts.append('-n')
+    if opts.verbose:
+        new_opts.append('-' + 'v' * opts.verbose)
+    if opts.database:
+        new_opts.append('-d')
     if opts.subdir:
         new_opts.append('-C')
         new_opts.append(opts.subdir)

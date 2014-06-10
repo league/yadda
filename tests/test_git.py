@@ -23,6 +23,11 @@ class NonGitTest(caseutils.TmpDirCase):
         self.assertTrue(os.path.isfile(os.path.join(d, 'config')))
         self.assertTrue(os.path.isdir(os.path.join(d, 'hooks')))
 
+    def test_receive_commit(self):
+        self.assertEqual(None, git.receive_master_commit([]))
+        self.assertEqual(None, git.receive_master_commit(['123abc 456def refs/heads/foo\n']))
+        self.assertEqual('456def', git.receive_master_commit(['123abc 456def refs/heads/master\n']))
+
 class GitTest(caseutils.GitWorkDirCase):
     def setUp(self):
         super(GitTest, self).setUp()

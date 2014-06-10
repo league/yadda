@@ -33,11 +33,11 @@ def set_remote(opts, name, url):
     else:
         utils.dry_call(opts, ['git', 'remote', 'add', name, url])
 
-def receive_master_commit():
+def receive_master_commit(input=sys.stdin):
     '''Parse the standard input for a git receive hook.
 Answer the commit hash for an update to master, if any.'''
     # For each ref updated: <old-value> SP <new-value> SP <ref-name> LF
-    for line in sys.stdin:
+    for line in input:
         old, new, ref = line.split()
         if ref == 'refs/heads/master':
             return new

@@ -2,9 +2,11 @@
 # ©2014 Christopher League <league@contrapunctus.net>
 
 from StringIO import StringIO
+from argparse import Namespace, ArgumentTypeError
 from contextlib import closing
 from yadda.utils import *
-from argparse import Namespace, ArgumentTypeError
+import caseutils
+import os
 import unittest
 
 class ArgsTest(unittest.TestCase):
@@ -80,3 +82,17 @@ class SayTest(unittest.TestCase):
 
     def test_say_call_err_code(self):
         self.assertRaises(SystemExit, say_call, self.opts, ['false'])
+
+class FilesTest(caseutils.TmpDirCase):
+    def test_symlink_exists(self):
+        open('foo', 'a').close()
+        self.assertTrue(os.path.isfile('foo'))
+        force_symlink('abc', 'foo')
+        self.assertTrue(os.path.islink('foo'))
+
+    def test_save_cwd(self):
+        d1 = os.getcwd()
+        with save_cwd() as cwd:
+            os.chdir('/')
+            self.assertNotEqual(d1, os.getcwd())
+        self.assertEqual(d1, os.getcwd())
