@@ -2,7 +2,7 @@
 # ©2014 Christopher League <league@contrapunctus.net>
 
 from yadda import git, docker
-from yadda.models import App, Build, Role
+from yadda.models import App, Build, Role, Release
 from yadda.settings import HASH_ABBREV
 from yadda.utils import die, sayf
 import argparse
