@@ -4,6 +4,7 @@
 from yadda import utils
 import os.path
 import subprocess
+import sys
 
 def has_dot_git(dir='.'):
     g = os.path.join(dir, '.git')
@@ -31,3 +32,12 @@ def set_remote(opts, name, url):
         utils.dry_call(opts, ['git', 'remote', 'set-url', name, url])
     else:
         utils.dry_call(opts, ['git', 'remote', 'add', name, url])
+
+def receive_master_commit():
+    '''Parse the standard input for a git receive hook.
+Answer the commit hash for an update to master, if any.'''
+    # For each ref updated: <old-value> SP <new-value> SP <ref-name> LF
+    for line in sys.stdin:
+        old, new, ref = line.split()
+        if ref == 'refs/heads/master':
+            return new

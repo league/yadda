@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # yadda.main ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
