@@ -2,6 +2,7 @@
 # ©2014 Christopher League <league@contrapunctus.net>
 
 from yadda import settings
+from contextlib import contextmanager
 import argparse
 import errno
 import os
@@ -104,8 +105,16 @@ def force_symlink(file1, file2):
             os.remove(file2)
             os.symlink(file1, file2)
 
-class save_cwd(object):
-    def __enter__(self):
-        self.prev = os.getcwd()
-    def __exit__(self, type, value, traceback):
-        os.chdir(self.prev)
+@contextmanager
+def save_cwd():
+    prev = os.getcwd()
+    yield
+    os.chdir(prev)
+
+@contextmanager
+def unlinking(file):
+    yield
+    try:
+        os.unlink(file)
+    except OSError:
+        pass

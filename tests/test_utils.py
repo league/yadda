@@ -92,7 +92,7 @@ class FilesTest(caseutils.TmpDirCase):
 
     def test_save_cwd(self):
         d1 = os.getcwd()
-        with save_cwd() as cwd:
+        with save_cwd():
             os.chdir('/')
             self.assertNotEqual(d1, os.getcwd())
         self.assertEqual(d1, os.getcwd())

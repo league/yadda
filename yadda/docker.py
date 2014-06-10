@@ -5,7 +5,7 @@ from datetime import datetime
 from uuid import uuid4 as uuid
 from yadda.models import Build
 from yadda.settings import HASH_ABBREV, DOCKER
-from yadda.utils import save_cwd, dry_call, die
+from yadda.utils import save_cwd, dry_call, die, unlinking
 import os
 import subprocess
 import sys
@@ -13,13 +13,13 @@ import tempfile
 
 def build(opts, b):
     assert(isinstance(b, Build))
-    with save_cwd() as cwd:
+    t = b.tag()
+    log = os.path.join(tempfile.gettempdir(),
+                       '%s.%s' % (t, uuid().hex[:HASH_ABBREV]))
+    with save_cwd(), unlinking(log):
         os.chdir(b.workdir)
         if b.app.subdir and os.path.isdir(b.app.subdir):
             os.chdir(b.app.subdir)
-        t = b.tag()
-        log = os.path.join(tempfile.gettempdir(),
-                           '%s.%s' % (t, uuid().hex[:HASH_ABBREV]))
         b.build_log = ''
         b.build_status = None
         try:
@@ -41,9 +41,5 @@ def build(opts, b):
         finally:
             b.build_finish = datetime.now()
             b.app.save()
-            try:
-                os.unlink(log)
-            except OSError:
-                pass
             if b.build_status != 0:
                 die('docker build failure: ' + str(b.build_status))
