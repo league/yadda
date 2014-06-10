@@ -25,7 +25,8 @@ def build(opts, b):
         try:
             # Hook to avoid executing docker during unit tests
             if os.environ.get('YADDA_TEST_BAN') == DOCKER: return
-            p1 = subprocess.Popen([DOCKER, 'build', '-t', t, '.'],
+            p1 = subprocess.Popen('%s build -t %s . 2>&1' % (DOCKER, t),
+                                  shell=True,
                                   stdout=subprocess.PIPE)
             p2 = subprocess.Popen(['tee', log],
                                   stdin=p1.stdout,
