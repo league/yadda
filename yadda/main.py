@@ -1,7 +1,7 @@
 # yadda.main ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-from yadda import version, git, settings
+from yadda import version, git, settings, receive
 from yadda.commands import init
 from yadda.models import Role, App
 from yadda.utils import say, die, show_opts, say_call
@@ -18,6 +18,8 @@ def main(argv=None):
     reinvoke this command.
 
     """
+    if sys.argv[0].endswith('receive'):
+        return receive.run()
     if argv is None:
         argv = sys.argv[1:]
     opts = args().parse_args(argv)
@@ -27,8 +29,10 @@ def main(argv=None):
     assert(hasattr(opts, 'func')) # the correct attributes
     say(opts, opts, show=show_opts, level=2)
 
-    if opts.cmd == 'init': init.pre_run(opts)
-    else: dispatch(opts, argv)
+    if opts.cmd == 'init':
+        return init.pre_run(opts)
+    else:
+        return dispatch(opts, argv)
 
 def dispatch(opts, argv):
     opts.dispatch = ''
