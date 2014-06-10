@@ -131,11 +131,12 @@ class Env(AppComponent):
 
 class Build(AppComponent):
     def __init__(self, app, git_hash):
-        super(Build,self).__init__(app, app.builds)
+        super(Build,self).__init__(app, app.builds, workdir=None)
         self.git_hash = git_hash
         self.image_id = None
         self.build_loc = app.role
         self.build_start = datetime.now()
+        self.workdir = workdir
 
     def git_abbrev(self):
         return self.git_hash[:5]
