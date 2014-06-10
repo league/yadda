@@ -2,4 +2,4 @@
 # ©2014 Christopher League <league@contrapunctus.net>
 
 def run():
-    print("THIS IS THE RECEIVE HOOK!")
+    print("THIS IS THE RECEIVE HOOK.")
