@@ -15,4 +15,4 @@ def build(opts, b):
         result = dry_call(opts, ['docker', 'build', '-t', b.tag(), '.'],
                           call=subprocess.check_output)
         b.build_log = result
-        b.save()
+        b.app.save()
