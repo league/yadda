@@ -3,6 +3,7 @@
 
 from yadda import git, docker
 from yadda.models import App, Build, Role
+from yadda.settings import HASH_ABBREV
 from yadda.utils import die
 import argparse
 import os
@@ -10,8 +11,8 @@ import subprocess
 import sys
 
 def run():
-    c = git.receive_master_commit()
-    if not c:
+    commit = git.receive_master_commit()
+    if not commit:
         print('Note: No update to master')
         sys.exit(0)
     name, ext = os.path.splitext(os.path.basename(os.getcwd()))
@@ -19,16 +20,17 @@ def run():
         app = App.load(name)
     except KeyError:
         die('Warning: app %s not configured, cannot deploy' % name)
-    commit = c[:5]
-    workdir = os.path.join(os.environ['HOME'], '%s-%s' % (name, commit))
-    b = Build(app, c, workdir=workdir)
-    app.save()
-    print('Starting build ' + b.tag() + ' in ' + workdir)
+
+    opts = argparse.Namespace(verbose=1, dry_run=False, target=app.role)
+    workdir = os.path.join(os.environ['HOME'], '%s-%s' %
+                           (name, commit[:HASH_ABBREV]))
     if not os.path.isdir(workdir): os.mkdir(workdir)
+    b = Build(app, commit, workdir=workdir)
+    app.save()                  # checkpoint
+
+    sayf(opts, 'Starting build {} in {}', b.tag(), workdir)
     subprocess.check_call(
-        'git archive "%s" | tar -x -C "%s"' % (c, workdir),
+        'git archive "%s" | tar -x -C "%s"' % (commit, workdir),
         shell=True
     )
-    os.chdir(workdir)
-    opts = argparse.Namespace(verbose=1, dry_run=False, target=Role.qa)
     docker.build(opts, b)

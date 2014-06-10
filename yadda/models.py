@@ -4,7 +4,8 @@
 from contextlib import closing
 from copy import copy
 from datetime import datetime
-from yadda import version, settings, utils
+from yadda import version, utils
+from yadda.settings import DATA_FILE, HASH_ABBREV
 import hashlib
 import shelve
 
@@ -35,11 +36,11 @@ class App(object):
     def __str__(self):
         return self.name
 
-    def save(self, file=settings.DATA_FILE):
+    def save(self, file=DATA_FILE):
         with closing(shelve.open(file)) as sh:
             sh[self.name] = self
 
-    def maybe_save(self, opts, file=settings.DATA_FILE):
+    def maybe_save(self, opts, file=DATA_FILE):
         utils.dry_guard(opts, 'saving app data', self.save, file)
 
     @staticmethod
@@ -47,14 +48,14 @@ class App(object):
         return 1 + max([x.serial for x in xs] or [0])
 
     @staticmethod
-    def load(name, file=settings.DATA_FILE):
+    def load(name, file=DATA_FILE):
         with closing(shelve.open(file)) as sh:
             app = sh[name]
             assert(isinstance(app, App))
             return app
 
     @staticmethod
-    def list(file=settings.DATA_FILE):
+    def list(file=DATA_FILE):
         with closing(shelve.open(file)) as sh:
             return sh.keys()
 
@@ -117,7 +118,7 @@ class Env(AppComponent):
 
     def version(self):
         v = super(Env,self).version()
-        if self.frozen: return v + '.' + self.frozen[:5]
+        if self.frozen: return v + '.' + self.frozen[:HASH_ABBREV]
         else: return v
 
     def __str__(self):
@@ -139,7 +140,7 @@ class Build(AppComponent):
         self.workdir = workdir
 
     def git_abbrev(self):
-        return self.git_hash[:5]
+        return self.git_hash[:HASH_ABBREV]
 
     def version(self):
         return '.'.join([self.build_loc, str(self.serial), self.git_abbrev()])

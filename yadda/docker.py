@@ -2,11 +2,16 @@
 # ©2014 Christopher League <league@contrapunctus.net>
 
 import os
+from yadda.models import Build
 from yadda.utils import save_cwd, dry_call
 
 def build(opts, b):
+    assert(isinstance(b, Build))
     with save_cwd() as cwd:
         os.chdir(b.workdir)
         if b.app.subdir and os.path.isdir(b.app.subdir):
             os.chdir(b.app.subdir)
-        err = dry_call(opts, ['docker', 'build', '-t', b.tag(), '.'])
+        result = dry_call(opts, ['docker', 'build', '-t', b.tag(), '.'],
+                          call=subprocess.check_output)
+        b.build_log = result
+        b.save()
