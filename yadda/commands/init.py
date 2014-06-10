@@ -1,4 +1,4 @@
-# yadda.commands.init ▪ coding: utf8
+# yadda.commands.init ▪ Initialize a new application ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
 from yadda import git
@@ -36,9 +36,8 @@ def opts_to_list(opts):
     return new_opts
 
 def args(cmd, subparse, common):
-    p = subparse.add_parser(cmd, parents=[common],
-                            help='initialize a new application',
-                            description='Initialize a new application')
+    p = subparse.add_parser(cmd, parents=[common], help=run.__doc__,
+                            description=run.__doc__.capitalize())
     p.add_argument('-d', '--database', action='store_true',
                    help='link container with database')
     p.add_argument('-C', '--subdir', metavar='SUBDIR',
@@ -51,6 +50,7 @@ def args(cmd, subparse, common):
     p.set_defaults(cmd=cmd, func=run)
 
 def run(opts):
+    'initialize a new application'
     change = False
     try:
         app = App.load(opts.name)

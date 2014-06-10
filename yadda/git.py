@@ -1,4 +1,4 @@
-# yadda.git ▪ coding: utf8
+# yadda.git ▪ Python interface to git commands ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
 from yadda import utils

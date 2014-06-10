@@ -1,4 +1,4 @@
-# yadda.receive ▪ coding: utf8
+# yadda.receive ▪ Implement the git pre-receive hook ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
 from yadda import git, docker

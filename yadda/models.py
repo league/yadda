@@ -1,4 +1,4 @@
-# yadda.models ▪ coding: utf8
+# yadda.models ▪ Data models for representing app info ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
 from contextlib import closing

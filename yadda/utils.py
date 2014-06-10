@@ -1,4 +1,4 @@
-# yadda.utils ▪ coding: utf8
+# yadda.utils ▪ Various utility functions ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
 import argparse

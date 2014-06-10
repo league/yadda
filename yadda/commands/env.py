@@ -1,4 +1,4 @@
-# yadda.commands.env ▪ coding: utf8
+# yadda.commands.env ▪ Show or adjust app environment ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
 from copy import copy

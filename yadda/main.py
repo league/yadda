@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# yadda.main ▪ coding: utf8
+# yadda.main ▪ Main program that dispatches to sub-commands ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
 from yadda import version, git, settings, receive
