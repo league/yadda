@@ -1,9 +1,10 @@
 # yadda.receive ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-from yadda import git
+from yadda import git, docker
+from yadda.models import App, Build, Role
 from yadda.utils import die
-from yadda.models import App, Build
+import argparse
 import os
 import subprocess
 import sys
@@ -25,7 +26,9 @@ def run():
     print('Starting build ' + b.tag() + ' in ' + workdir)
     if not os.path.isdir(workdir): os.mkdir(workdir)
     subprocess.check_call(
-        'git archive "%s" | tar -x -C "%s"' % (commit, workdir),
+        'git archive "%s" | tar -x -C "%s"' % (c, workdir),
         shell=True
     )
     os.chdir(workdir)
+    opts = argparse.Namespace(verbose=1, dry_run=False, target=Role.qa)
+    docker.build(opts, b)

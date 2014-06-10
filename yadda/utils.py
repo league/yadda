@@ -97,3 +97,9 @@ def force_symlink(file1, file2):
         if e.errno == errno.EEXIST:
             os.remove(file2)
             os.symlink(file1, file2)
+
+class save_cwd(object):
+    def __enter__(self):
+        self.prev = os.getcwd()
+    def __exit__(self, type, value, traceback):
+        os.chdir(self.prev)
