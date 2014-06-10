@@ -4,7 +4,7 @@
 from yadda import git, docker
 from yadda.models import App, Build, Role
 from yadda.settings import HASH_ABBREV
-from yadda.utils import die
+from yadda.utils import die, sayf
 import argparse
 import os
 import subprocess
