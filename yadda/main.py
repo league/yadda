@@ -2,14 +2,19 @@
 # yadda.main ▪ Main program that dispatches to sub-commands ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-from yadda import version, git, settings, receive
+from yadda import version, settings, receive
 from yadda.commands import init
+from yadda.git import Git
 from yadda.models import Role, App
 from yadda.utils import say, die, show_opts, say_call
 import argparse
+import os.path
 import pkgutil
+import subprocess
 import sys
 import yadda.commands
+
+git = Git(filesystem=os.path, subprocess=subprocess)
 
 def main(argv=None):
     """Top-level entry point for the yadda program.
@@ -41,7 +46,7 @@ def dispatch(opts, argv):
     if not opts.app:            # If not provided on command-line,
         try:                    # Look in .git/config
             say(opts, 'Loading app name from .git/config')
-            opts.app = git.get_yadda_app()
+            opts.app = git.get_local_config('yadda.app')
         except KeyError:
             die('app name not specified in .git/config; did you init?')
     try:

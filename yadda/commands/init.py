@@ -1,10 +1,14 @@
 # yadda.commands.init ▪ Initialize a new application ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-from yadda import git, settings
+from yadda import settings
+from yadda.git import Git
 from yadda.models import Role, App, Env
 from yadda.utils import *
 import os
+import subprocess
+
+git = Git(filesystem=os.path, subprocess=subprocess)
 
 def pre_run(opts):
     """Run the init command on applicable hosts.
@@ -74,15 +78,15 @@ def run(opts):
     if change:
         app.maybe_save(opts)
     if opts.target == Role.dev:
-        if git.has_dot_git():
-            git.set_yadda_app(opts, app.name)
+        if git.is_working_dir():
+            git.set_local_config('yadda.app', app.name)
             if opts.qa:
-                git.set_remote(opts, Role.qa, '%s:%s.git' % (opts.qa, app.name))
+                git.set_remote(Role.qa, '%s:%s.git' % (opts.qa, app.name))
         else:
             print('Note: could not save app name to .git/config')
     elif opts.target == Role.qa:
         d = app.name + '.git'
-        git.init_bare(opts, d)
+        git.init_bare(d)
         hook = os.path.join(d, os.path.join('hooks', 'pre-receive'))
         exe = os.path.realpath(sys.argv[0])
         dry_guard(opts, 'symlink %s -> %s' % (hook, exe),

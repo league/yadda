@@ -1,7 +1,8 @@
 # yadda.receive ▪ Implement the git pre-receive hook ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-from yadda import git, docker
+from yadda import docker
+from yadda.git import Git
 from yadda.models import App, Build, Role, Release
 from yadda.settings import HASH_ABBREV
 from yadda.utils import die, sayf
@@ -9,6 +10,8 @@ import argparse
 import os
 import subprocess
 import sys
+
+git = Git(filesystem=os.path, subprocess=subprocess)
 
 def run(home=os.environ['HOME'], input=sys.stdin):
     commit = git.receive_master_commit(input)
