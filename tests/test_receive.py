@@ -1,9 +1,8 @@
 # test_receive ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-from caseutils import GitWorkDirCase, AppNameCase
-from mock.filesystem import MockFilesystem
-from mock.subprocess import MockSubprocess
+from tests.mock.filesystem import MockFilesystem
+from tests.mock.subprocess import MockSubprocess
 from yadda import settings
 from yadda.docker import Docker
 from yadda.git import Git
@@ -46,8 +45,8 @@ class BaseReceiveTest(unittest.TestCase):
         try:
             self.receive.run(stdin=['123abc 456def refs/heads/master'])
         except SystemExit as exn:
-            self.assertIn('not configured', exn.message)
-            self.assertIn(self.name, exn.message)
+            self.assertIn('not configured', exn.args[0])
+            self.assertIn(self.name, exn.args[0])
             return
         assert False, 'expected SystemExit'
 
@@ -74,6 +73,6 @@ class BaseReceiveTest(unittest.TestCase):
         try:
             self.receive.run(stdin=['123abc 456def refs/heads/master'])
         except SystemExit as exn:
-            self.assertIn('docker build failure', exn.message)
+            self.assertIn('docker build failure', exn.args[0])
             return
         assert False

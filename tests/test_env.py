@@ -1,8 +1,8 @@
 # test_env ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-from StringIO import StringIO
-from mock.filesystem import MockFilesystem
+from io import StringIO
+from tests.mock.filesystem import MockFilesystem
 from uuid import uuid4 as uuid
 from yadda import main
 from yadda import settings
@@ -83,7 +83,7 @@ class EnvOptionsTest(unittest.TestCase):
 
     def test_history_ok(self):
         opts = self.args.parse_args(['env', 'log'])
-        self.assertEqual(opts.verbose, None)
+        self.assertEqual(opts.verbose, 0)
         self.assertEqual(opts.dry_run, False)
         self.assertEqual(opts.target, Role.dev)
         self.assertEqual(opts.app, None)
@@ -93,7 +93,7 @@ class EnvOptionsTest(unittest.TestCase):
         opts = self.args.parse_args(['env', 'ls', '-v', '3'])
         self.assertTrue(hasattr(opts, 'revision'))
         self.assertEqual(opts.revision, 3)
-        self.assertEqual(opts.verbose, True)
+        self.assertEqual(opts.verbose, 1)
 
     def test_show_ok(self):
         opts = self.args.parse_args(['env', 'ls'])

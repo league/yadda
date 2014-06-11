@@ -2,7 +2,7 @@
 # ©2014 Christopher League <league@contrapunctus.net>
 
 from contextlib import contextmanager, closing
-from subprocess import Closable
+from tests.mock.subprocess import Closable
 from uuid import uuid4 as uuid
 from yadda.filesystem import AugmentedFilesystem
 import os.path

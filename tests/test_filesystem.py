@@ -3,10 +3,12 @@
 
 import unittest
 
-from mock.filesystem import MockFilesystem
+from contextlib import closing
+from tests.mock.filesystem import MockFilesystem
 from yadda import version
 from yadda.filesystem import RealFilesystem
 import os.path
+from uuid import uuid4 as uuid
 
 class BaseFilesystemTest(object):
     def test_home_isdir(self):
@@ -38,6 +40,15 @@ class BaseFilesystemTest(object):
             self.assertFalse(self.fs.isdir(tmp))
             self.fs.mkdir(tmp)
             self.assertTrue(self.fs.isdir(tmp))
+
+    def test_shelve(self):
+        with self.fs.tempname() as tmp:
+            u = uuid().hex
+            k, v = u[0:8], u[8:16]
+            with closing(self.fs.shelve_open(tmp)) as sh:
+                sh[k] = v
+            with closing(self.fs.shelve_open(tmp)) as sh:
+                self.assertEqual(sh[k], v)
 
 class MockFilesystemTest(unittest.TestCase, BaseFilesystemTest):
     def setUp(self):

@@ -1,8 +1,9 @@
 # yadda.utils ▪ Various utility functions ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-from yadda import settings
+from __future__ import unicode_literals
 from contextlib import contextmanager
+from yadda import settings
 import argparse
 import errno
 import os
@@ -96,7 +97,7 @@ def force_symlink(file1, file2):
     'Simulate `ln -sf`, replacing `file2` if it exists already.'
     try:
         os.symlink(file1, file2)
-    except OSError, e:
+    except OSError as e:
         if e.errno == errno.EEXIST:
             os.remove(file2)
             os.symlink(file1, file2)

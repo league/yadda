@@ -1,8 +1,8 @@
 # test_docker ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-from mock.filesystem import MockFilesystem
-from mock.subprocess import MockSubprocess
+from tests.mock.filesystem import MockFilesystem
+from tests.mock.subprocess import MockSubprocess
 from uuid import uuid4 as uuid
 from yadda import utils
 from yadda.docker import Docker

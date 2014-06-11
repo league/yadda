@@ -1,9 +1,11 @@
 # yadda.commands.env ▪ Show or adjust app environment ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
+from __future__ import unicode_literals
 from copy import copy
 from yadda import utils
 import json
+import sys
 
 class EnvCommand(object):
     'show or adjust the application environment'
@@ -25,18 +27,21 @@ class EnvCommand(object):
         if opts.format == 'json':
             self.show_json(e.env)
         else:
-            self.stdout.writelines('\n'.join(getattr(self, 'gen_' + opts.format)(e.env)))
+            self.stdout.write('\n'.join(getattr(self, 'gen_' + opts.format)(e.env)))
         self.stdout.write('\n')
 
     def show_json(self, env):
-        self.stdout.write(json.dumps(env))
+        if sys.version_info.major == 3: # Grr, can't find a way to please both
+            self.stdout.write(json.dumps(env, ensure_ascii=False))
+        else:
+            self.stdout.write(unicode(json.dumps(env)))
 
     def gen_csh(self, env):
-        for k, v in env.iteritems():
+        for k, v in env.items():
             yield "setenv %s '%s';" % (k, v)
 
     def gen_sh(self, env):
-        for k, v in env.iteritems():
+        for k, v in env.items():
             yield "%s='%s'; export %s;" % (k, v, k)
 
     def gen_human(self, env):

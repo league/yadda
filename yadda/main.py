@@ -93,7 +93,7 @@ def args():
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument('-n', '--dry-run', action='store_true',
                         help='perform trial run without making changes; implies -v')
-    common.add_argument('-v', '--verbose', action='count',
+    common.add_argument('-v', '--verbose', action='count', default=0,
                         help='increase output about what is happening')
     common.add_argument('-a', '--app', metavar='NAME',
                         help='application on which to operate')

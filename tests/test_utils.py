@@ -1,11 +1,11 @@
 # test_utils ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-from StringIO import StringIO
+from __future__ import unicode_literals
+from io import StringIO
 from argparse import Namespace, ArgumentTypeError
 from contextlib import closing
 from yadda.utils import *
-import caseutils
 import os
 import unittest
 
@@ -41,14 +41,14 @@ class ShowOptsTest(unittest.TestCase):
 
     def test_string_gen(self):
         g = show_opts(self.opts)
-        self.assertEqual('option bazzz = True', g.next())
-        self.assertEqual('option foo   = bar', g.next())
-        self.assertRaises(StopIteration, g.next)
+        self.assertEqual('option bazzz = True', next(g))
+        self.assertEqual('option foo   = bar', next(g))
+        self.assertRaises(StopIteration, next, g)
 
 class SayTest(unittest.TestCase):
 
     def setUp(self):
-        self.opts = Namespace(verbose=True, target='dev')
+        self.opts = Namespace(verbose=1, target='dev')
 
     def test_sayf(self):
         sayf(self.opts, "hello %d world", 42)
@@ -59,9 +59,9 @@ class SayTest(unittest.TestCase):
             self.assertEqual('dev  » hello\n', out.getvalue())
 
     def test_quiet_say(self):
-        self.opts.verbose = False
+        self.opts.verbose = 0
         with closing(StringIO()) as out:
-            say(Namespace(verbose=False), 'hello', out=out)
+            say(Namespace(verbose=0), 'hello', out=out)
             self.assertEqual('', out.getvalue())
 
     def test_verbose_say(self):
@@ -82,17 +82,3 @@ class SayTest(unittest.TestCase):
 
     def test_say_call_err_code(self):
         self.assertRaises(SystemExit, say_call, self.opts, ['false'])
-
-class FilesTest(caseutils.TmpDirCase):
-    def test_symlink_exists(self):
-        open('foo', 'a').close()
-        self.assertTrue(os.path.isfile('foo'))
-        force_symlink('abc', 'foo')
-        self.assertTrue(os.path.islink('foo'))
-
-    def test_save_cwd(self):
-        d1 = os.getcwd()
-        with save_cwd():
-            os.chdir('/')
-            self.assertNotEqual(d1, os.getcwd())
-        self.assertEqual(d1, os.getcwd())
