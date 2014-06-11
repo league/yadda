@@ -1,11 +1,12 @@
 # yadda.receive ▪ Implement the git pre-receive hook ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
+from datetime import datetime
 from yadda.docker import Docker
-from yadda.git import Git
 from yadda.filesystem import RealFilesystem
-from yadda.models import App, Build, Role, Release
-from yadda.settings import HASH_ABBREV
+from yadda.git import Git
+from yadda.models import App, Build, Role, Release, AppFactory
+from yadda.settings import HASH_ABBREV, DATA_FILE
 from yadda.utils import die, sayf
 import argparse
 import os
@@ -15,6 +16,7 @@ import sys
 filesystem = RealFilesystem()
 git = Git(filesystem=filesystem, subprocess=subprocess)
 docker = Docker(filesystem=filesystem, subprocess=subprocess)
+appfactory = AppFactory(filesystem=filesystem, datafile=DATA_FILE)
 
 def run(home=os.environ['HOME'], input=sys.stdin):
     commit = git.receive_master_commit(input)
@@ -23,7 +25,7 @@ def run(home=os.environ['HOME'], input=sys.stdin):
         sys.exit(0)
     name, ext = os.path.splitext(os.path.basename(os.getcwd()))
     try:
-        app = App.load(name)
+        app = appfactory.load(name)
     except KeyError:
         die('Warning: app %s not configured, cannot deploy' % name)
 

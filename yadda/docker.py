@@ -1,10 +1,6 @@
 # yadda.docker ▪ Python interface to docker commands ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-from datetime import datetime
-from uuid import uuid4 as uuid
-from yadda.models import Build
-from yadda.settings import HASH_ABBREV, DOCKER
 from yadda import utils
 import os
 import subprocess

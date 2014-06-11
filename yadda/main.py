@@ -2,11 +2,12 @@
 # yadda.main ▪ Main program that dispatches to sub-commands ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
+from yadda import utils
 from yadda import version, settings, receive
 from yadda.commands import init
+from yadda.filesystem import RealFilesystem
 from yadda.git import Git
-from yadda.models import Role, App
-from yadda.utils import say, die, show_opts, say_call
+from yadda.models import Role, App, AppFactory
 import argparse
 import os.path
 import pkgutil
@@ -14,7 +15,9 @@ import subprocess
 import sys
 import yadda.commands
 
-git = Git(filesystem=os.path, subprocess=subprocess)
+filesystem = RealFilesystem()
+git = Git(filesystem=filesystem, subprocess=subprocess)
+appfactory = AppFactory(filesystem=filesystem, datafile=settings.DATA_FILE)
 
 def main(argv=None):
     """Top-level entry point for the yadda program.
@@ -33,7 +36,7 @@ def main(argv=None):
         opts.verbose = 1
     assert(hasattr(opts, 'cmd'))  # Verify the sub-command parsers added
     assert(hasattr(opts, 'func')) # the correct attributes
-    say(opts, opts, show=show_opts, level=2)
+    utils.say(opts, opts, show=utils.show_opts, level=2)
 
     if opts.cmd == 'init':
         return init.pre_run(opts)
@@ -45,16 +48,16 @@ def dispatch(opts, argv):
     """Load the app context, and run sub-command on designated target."""
     if not opts.app:            # If not provided on command-line,
         try:                    # Look in .git/config
-            say(opts, 'Loading app name from .git/config')
+            utils.say(opts, 'Loading app name from .git/config')
             opts.app = git.get_local_config('yadda.app')
         except KeyError:
-            die('app name not specified in .git/config; did you init?')
+            utils.die('app name not specified in .git/config; did you init?')
     try:
-        opts.app = App.load(opts.app)
+        opts.app = appfactory.load(opts.app)
         opts.dispatch = opts.app.role
     except KeyError:
-        die('"%s" not found in %s; retry init?' %
-            (opts.app, settings.DATA_FILE))
+        utils.die('"%s" not found in %s; retry init?' %
+                  (opts.app, settings.DATA_FILE))
 
     if opts.target == opts.app.role: # We're in the right place
         del opts.dispatch
@@ -66,7 +69,7 @@ def dispatch(opts, argv):
                 (opts.app.name, opts.target))
         argv.append('--app')
         argv.append(opts.app.name)
-        say_call(opts, [settings.SSH, host, 'yadda'] + argv)
+        utils.say_call(opts, [settings.SSH, host, 'yadda'] + argv)
 
 def args():
     """Specify command-line argument specification for entire program.

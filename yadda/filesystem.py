@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from uuid import uuid4 as uuid
 import os.path
 import tempfile
+import shelve
 
 class AugmentedFilesystem(object):
     @contextmanager
@@ -22,3 +23,9 @@ class RealFilesystem(AugmentedFilesystem):
 
     def unlink(self, f):
         return os.unlink(f)
+
+    def shelve_open(self, f):
+        return shelve.open(f)
+
+    def isfile(self, f):
+        return os.path.isfile(f)

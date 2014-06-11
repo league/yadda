@@ -4,10 +4,9 @@
 from contextlib import closing
 from copy import copy
 from datetime import datetime
-from yadda import version, utils
-from yadda.settings import DATA_FILE, HASH_ABBREV
+from yadda import version
+from yadda.settings import HASH_ABBREV
 import hashlib
-import shelve
 
 class Role(object):
     dev = 'dev'
@@ -17,6 +16,30 @@ class Role(object):
     description = {dev: 'development',
                    qa: 'staging',
                    live: 'production'}
+
+class AppFactory(object):
+    def __init__(self, filesystem, datafile):
+        self.filesystem = filesystem
+        self.datafile = datafile
+
+    def load(self, name):
+        with closing(self.filesystem.shelve_open(self.datafile)) as sh:
+            app = sh[name]
+            assert(isinstance(app, App))
+            app.filesystem = self.filesystem
+            app.datafile = self.datafile
+            return app
+
+    def new(self, *args, **kwargs):
+        app = App(*args, **kwargs)
+        app.filesystem = self.filesystem
+        app.datafile = self.datafile
+        return app
+
+    def list(self):
+        with closing(self.filesystem.shelve_open(self.datafile)) as sh:
+            return sh.keys()
+
 
 class App(object):
     def __init__(self, name, role=Role.dev, qa=None, live=None,
@@ -36,28 +59,13 @@ class App(object):
     def __str__(self):
         return self.name
 
-    def save(self, file=DATA_FILE):
-        with closing(shelve.open(file)) as sh:
+    def save(self):
+        with closing(self.filesystem.shelve_open(self.datafile)) as sh:
             sh[self.name] = self
-
-    def maybe_save(self, opts, file=DATA_FILE):
-        utils.dry_guard(opts, 'saving app data', self.save, file)
 
     @staticmethod
     def next_serial(xs):
         return 1 + max([x.serial for x in xs] or [0])
-
-    @staticmethod
-    def load(name, file=DATA_FILE):
-        with closing(shelve.open(file)) as sh:
-            app = sh[name]
-            assert(isinstance(app, App))
-            return app
-
-    @staticmethod
-    def list(file=DATA_FILE):
-        with closing(shelve.open(file)) as sh:
-            return sh.keys()
 
 class AppComponent(object):
     def __init__(self, app, ls=None):

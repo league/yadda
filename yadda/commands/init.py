@@ -2,13 +2,17 @@
 # ©2014 Christopher League <league@contrapunctus.net>
 
 from yadda import settings
+from yadda import utils
+from yadda.filesystem import RealFilesystem
 from yadda.git import Git
-from yadda.models import Role, App, Env
-from yadda.utils import *
+from yadda.models import AppFactory, Role, App, Env
 import os
 import subprocess
+import sys
 
-git = Git(filesystem=os.path, subprocess=subprocess)
+filesystem = RealFilesystem()
+git = Git(filesystem=filesystem, subprocess=subprocess)
+appfactory = AppFactory(filesystem=filesystem, datafile=settings.DATA_FILE)
 
 def pre_run(opts):
     """Run the init command on applicable hosts.
@@ -19,11 +23,11 @@ def pre_run(opts):
     """
     opts.func(opts)         # Run locally
     if opts.target == Role.dev and opts.qa:
-        say_call(opts, [settings.SSH, opts.qa, 'yadda', 'init', '-t', Role.qa] +
-                 opts_to_list(opts))
+        utils.say_call(opts, [settings.SSH, opts.qa, 'yadda', 'init', '-t', Role.qa] +
+                       opts_to_list(opts))
     elif opts.target == Role.qa and opts.live:
-        say_call(opts, [settings.SSH, opts.live, 'yadda', 'init', '-t', Role.live] +
-                 opts_to_list(opts))
+        utils.say_call(opts, [settings.SSH, opts.live, 'yadda', 'init', '-t', Role.live] +
+                       opts_to_list(opts))
 
 def opts_to_list(opts):
     new_opts = [opts.name]
@@ -49,7 +53,7 @@ def args(cmd, subparse, common):
                    help='link container with database')
     p.add_argument('-C', '--subdir', metavar='SUBDIR',
                    help='change to SUBDIR before building')
-    p.add_argument('name', metavar='NAME', type=slug_arg,
+    p.add_argument('name', metavar='NAME', type=utils.slug_arg,
                    help='name of the app to initialize')
     for r in Role.all[1:]:
         p.add_argument(r, metavar=r.upper()+'-HOST', nargs='?',
@@ -60,23 +64,23 @@ def run(opts):
     'initialize a new application'
     change = False
     try:
-        app = App.load(opts.name)
+        app = appfactory.load(opts.name)
         for av in 'role qa live subdir database'.split():
             ov = 'target' if av == 'role' else av
             if getattr(opts, ov) != getattr(app, av):
                 txt = av+' host' if av in Role.all else av
-                sayf(opts, 'changing {} {} to {}', opts.name, txt,
-                     getattr(opts, ov))
+                utils.sayf(opts, 'changing {} {} to {}', opts.name, txt,
+                           getattr(opts, ov))
                 setattr(app, av, getattr(opts, ov))
                 change = True
     except KeyError:
         change = True
-        sayf(opts, 'Creating app {} on {}', opts.name, opts.target)
-        app = App(opts.name, role=opts.target, qa=opts.qa, live=opts.live,
+        utils.sayf(opts, 'Creating app {} on {}', opts.name, opts.target)
+        app = appfactory.new(opts.name, role=opts.target, qa=opts.qa, live=opts.live,
                   subdir=opts.subdir, database=opts.database)
         Env(app).freeze()
     if change:
-        app.maybe_save(opts)
+        app.save()              # TODO: maybe_save
     if opts.target == Role.dev:
         if git.is_working_dir():
             git.set_local_config('yadda.app', app.name)
@@ -89,5 +93,5 @@ def run(opts):
         git.init_bare(d)
         hook = os.path.join(d, os.path.join('hooks', 'pre-receive'))
         exe = os.path.realpath(sys.argv[0])
-        dry_guard(opts, 'symlink %s -> %s' % (hook, exe),
-                  force_symlink, exe, hook)
+        utils.dry_guard(opts, 'symlink %s -> %s' % (hook, exe),
+                        utils.force_symlink, exe, hook)
