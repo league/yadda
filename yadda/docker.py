@@ -2,10 +2,6 @@
 # ©2014 Christopher League <league@contrapunctus.net>
 
 from yadda import utils
-import os
-import subprocess
-import sys
-import tempfile
 
 class Docker(object):
     def __init__(self, subprocess, filesystem, stdout=None):

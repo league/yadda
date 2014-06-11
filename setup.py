@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from os import linesep
 from os.path import join, dirname
 from setuptools import setup, find_packages
 from subprocess import check_output

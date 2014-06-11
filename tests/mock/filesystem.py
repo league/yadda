@@ -1,11 +1,9 @@
 # tests/mock.filesystem ▪ Fake implementation of isfile, isdir ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-from contextlib import contextmanager, closing
+from contextlib import closing
 from tests.mock.subprocess import Closable
-from uuid import uuid4 as uuid
 from yadda.filesystem import AugmentedFilesystem
-import os.path
 import tempfile
 
 class MockFileHandle(Closable):

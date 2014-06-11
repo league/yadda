@@ -3,15 +3,13 @@
 
 from tests.mock.filesystem import MockFilesystem
 from tests.mock.subprocess import MockSubprocess
+from uuid import uuid4 as uuid
 from yadda import settings
 from yadda.docker import Docker
 from yadda.git import Git
 from yadda.models import AppFactory
 from yadda.receive import Receive
-import os
-import subprocess
 import unittest
-from uuid import uuid4 as uuid
 
 class BaseReceiveTest(unittest.TestCase):
     def setUp(self):
@@ -51,7 +49,7 @@ class BaseReceiveTest(unittest.TestCase):
         assert False, 'expected SystemExit'
 
     def test_known_good_app(self):
-        app = self.appfactory.new(self.name).save()
+        self.appfactory.new(self.name).save()
         buildp = lambda c: c.startswith('docker build')
         self.subprocess.provideResult(buildp, 0)
         self.receive.run(stdin=['123abc 456def refs/heads/master'])
@@ -60,14 +58,14 @@ class BaseReceiveTest(unittest.TestCase):
         self.subprocess.assertExistsCommand(lambda c: c.startswith('docker build'))
 
     def test_subdir_app(self):
-        app = self.appfactory.new(self.name, subdir='ex/py').save()
+        self.appfactory.new(self.name, subdir='ex/py').save()
         buildp = lambda c: c.startswith('docker build')
         self.subprocess.provideResult(buildp, 0)
         self.receive.run(stdin=['123abc 456def refs/heads/master'])
         self.filesystem.assertExistsDir(lambda d: self.name in d and '456de' in d)
 
     def test_broken_build(self):
-        app = self.appfactory.new(self.name).save()
+        self.appfactory.new(self.name).save()
         buildp = lambda c: c.startswith('docker build')
         self.subprocess.provideResult(buildp, 1)
         try:

@@ -2,7 +2,6 @@
 # ©2014 Christopher League <league@contrapunctus.net>
 
 from os.path import join
-import sys
 
 class Git(object):
     def __init__(self, filesystem, subprocess):

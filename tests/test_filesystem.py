@@ -5,10 +5,9 @@ import unittest
 
 from contextlib import closing
 from tests.mock.filesystem import MockFilesystem
-from yadda import version
+from uuid import uuid4 as uuid
 from yadda.filesystem import RealFilesystem
 import os.path
-from uuid import uuid4 as uuid
 
 class BaseFilesystemTest(object):
     def test_home_isdir(self):

@@ -1,8 +1,6 @@
 # tests/mock.subprocess ▪ Fake subprocess calls for testing ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-import subprocess
-
 class Closable(object):
     def close(self):
         pass

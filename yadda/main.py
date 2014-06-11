@@ -3,14 +3,13 @@
 # ©2014 Christopher League <league@contrapunctus.net>
 
 from yadda import utils
-from yadda import version, settings, receive
+from yadda import version, settings
 from yadda.commands import init
 from yadda.filesystem import RealFilesystem
 from yadda.git import Git
 from yadda.models import Role, AppFactory
 from yadda.receive import Receive
 import argparse
-import os.path
 import pkgutil
 import subprocess
 import sys
@@ -75,8 +74,8 @@ def dispatch(opts, argv):
     else:
         host = getattr(opts.app, opts.target)
         if not host:
-            die('%s does not specify %s host; try init again?' %
-                (opts.app.name, opts.target))
+            utils.die('%s does not specify %s host; try init again?' %
+                      (opts.app.name, opts.target))
         argv.append('--app')
         argv.append(opts.app.name)
         utils.say_call(opts, [settings.SSH, host, 'yadda'] + argv)

@@ -2,8 +2,6 @@
 # ©2014 Christopher League <league@contrapunctus.net>
 
 from yadda.commands.init import opts_to_list
-from yadda.main import main
-from yadda.models import App
 import argparse
 import unittest
 

@@ -5,7 +5,7 @@ from yadda import settings
 from yadda import utils
 from yadda.filesystem import RealFilesystem
 from yadda.git import Git
-from yadda.models import AppFactory, Role, App, Env
+from yadda.models import AppFactory, Role, Env
 import os
 import subprocess
 import sys
