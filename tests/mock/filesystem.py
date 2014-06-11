@@ -29,7 +29,7 @@ class MockFilesystem(AugmentedFilesystem):
     def __init__(self):
         self._files = {}
         self._cwd = '/home'
-        self._dirs = set([self._cwd])
+        self._dirs = set([self._cwd, tempfile.gettempdir()])
         self._apps = {}
 
     def home(self):
@@ -47,6 +47,9 @@ class MockFilesystem(AugmentedFilesystem):
         except KeyError:
             raise OSError
 
+    def create_file_containing(self, f, content=''):
+        self._files[f] = content
+
     def open(self, f, mode):
         assert mode == 'r'
         try:
@@ -61,21 +64,15 @@ class MockFilesystem(AugmentedFilesystem):
         if self.isdir(d):
             self._cwd = d
         else:
-            raise OSError
+            raise OSError("No such file or directory: %r" % d)
 
     def mkdir(self, d):
-        self.addDir(d)
+        self._dirs.add(d)
 
     def shelve_open(self, f):
         return MockShelf(self._apps)
 
     #------------------------------------------------------------
-
-    def addFile(self, f, content=''):
-        self._files[f] = content
-
-    def addDir(self, d):
-        self._dirs.add(d)
 
     def assertExistsDir(self, pred):
         for d in self._dirs:

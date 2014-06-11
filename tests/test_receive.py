@@ -31,7 +31,7 @@ class BaseReceiveTest(unittest.TestCase):
 
         self.name = uuid().hex
         cwd = '/home/' + self.name
-        self.filesystem.addDir(cwd)
+        self.filesystem.mkdir(cwd)
         self.filesystem.chdir(cwd)
 
     def test_no_master_update(self):

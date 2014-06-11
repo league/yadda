@@ -13,10 +13,10 @@ class NewGitTest(unittest.TestCase):
         self.subprocess = MockSubprocess()
         self.git = Git(filesystem = self.filesystem,
                        subprocess = self.subprocess)
-        self.filesystem.addDir('not-git')
-        self.filesystem.addDir('yes-git')
-        self.filesystem.addDir('yes-git/.git')
-        self.filesystem.addFile('yes-git/.git/config')
+        self.filesystem.mkdir('not-git')
+        self.filesystem.mkdir('yes-git')
+        self.filesystem.mkdir('yes-git/.git')
+        self.filesystem.create_file_containing('yes-git/.git/config')
 
     def test_not_working_dir(self):
         self.assertFalse(self.git.is_working_dir('not-git'))

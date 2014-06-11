@@ -48,3 +48,7 @@ class RealFilesystem(AugmentedFilesystem):
 
     def shelve_open(self, f):
         return shelve.open(f)
+
+    def create_file_containing(self, f, content=''):
+        with open(f, 'w') as h:
+            h.write(content)

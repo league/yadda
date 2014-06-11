@@ -19,7 +19,7 @@ class DockerTest(unittest.TestCase):
 
     def applyTee(self, cmd):
         tee, f = cmd.split()
-        self.filesystem.addFile(f, 'build transcript')
+        self.filesystem.create_file_containing(f, 'build transcript')
         return True
 
     def test_docker_build_success(self):
