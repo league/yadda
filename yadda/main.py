@@ -20,6 +20,12 @@ filesystem = RealFilesystem()
 git = Git(filesystem=filesystem, subprocess=subprocess)
 appfactory = AppFactory(filesystem=filesystem, datafile=settings.DATA_FILE)
 
+container = {}
+container['filesystem'] = filesystem
+container['git'] = git
+container['appfactory'] = appfactory
+container['stdout'] = sys.stdout
+
 def main(argv=None):
     """Top-level entry point for the yadda program.
 
@@ -62,7 +68,10 @@ def dispatch(opts, argv):
 
     if opts.target == opts.app.role: # We're in the right place
         del opts.dispatch
-        opts.func(opts)
+        if hasattr(opts, 'ctor'):
+            getattr(opts.ctor(container), opts.func)(opts)
+        else:
+            opts.func(opts)
     else:
         host = getattr(opts.app, opts.target)
         if not host:

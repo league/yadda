@@ -2,90 +2,108 @@
 # ©2014 Christopher League <league@contrapunctus.net>
 
 from copy import copy
-from yadda import git, utils
-from yadda.models import App
+from yadda import utils
 import json
-import sys
+
+class EnvCommand(object):
+    'show or adjust the application environment'
+
+    FORMATS=['sh', 'csh', 'json', 'human']
+
+    def __init__(self, container):
+        self.stdout = container['stdout']
+
+    def run_ls(self, opts):
+        'list the values of variables in the environment'
+        if opts.revision:
+            try:
+                e = opts.app.envBySerial(opts.revision)
+            except IndexError:
+                raise SystemExit('no such revision: %d' % opts.revision)
+        else:
+            e = opts.app.envs[-1]
+        if opts.format == 'json':
+            self.show_json(e.env)
+        else:
+            self.stdout.writelines('\n'.join(getattr(self, 'gen_' + opts.format)(e.env)))
+        self.stdout.write('\n')
+
+    def show_json(self, env):
+        self.stdout.write(json.dumps(env))
+
+    def gen_csh(self, env):
+        for k, v in env.iteritems():
+            yield "setenv %s '%s';" % (k, v)
+
+    def gen_sh(self, env):
+        for k, v in env.iteritems():
+            yield "%s='%s'; export %s;" % (k, v, k)
+
+    def gen_human(self, env):
+        w = max([len(k) for k in env])
+        for k in sorted(env):
+            yield '%-*s = %s' % (w, k, env[k])
+
+    def summarize_version(self, e):
+        self.stdout.write(e.version() + ': ' + e.history + '\n')
+
+    def modify(self, opts, func):
+        e = func(opts, copy(opts.app.envs[-1])).freeze()
+        opts.app.save()
+        self.summarize_version(e)
+
+    def func_set(self, opts, e):
+        for b in opts.bindings:
+            e = e.set(b[0], b[1])
+        return e
+
+    def run_set(self, opts):
+        'add new bindings to the environment and redeploy'
+        self.modify(opts, self.func_set)
+
+    def func_rm(self, opts, e):
+        for v in opts.variables:
+            e = e.rm(v)
+        return e
+
+    def run_rm(self, opts):
+        'remove bindings from the environment and redeploy'
+        self.modify(opts, self.func_rm)
+
+    def run_log(self, opts):
+        'list changes to the environment over time'
+        for e in opts.app.envs:
+            self.summarize_version(e)
+
+def parser_for(variant, vs, common, *args, **kwargs):
+    method = getattr(EnvCommand, 'run_' + variant)
+    p = vs.add_parser(variant, parents=[common], help=method.__doc__,
+                      description=method.__doc__.capitalize())
+    p.set_defaults(func=method.__name__)
+    return p
 
 def args(cmd, subparse, common):
-    'show or adjust the application environment'
-    p = subparse.add_parser(cmd, parents=[common], help=args.__doc__,
-                            description=args.__doc__.capitalize())
-    p.set_defaults(cmd=cmd)
+    p = subparse.add_parser(cmd, parents=[common], help=EnvCommand.__doc__,
+                            description=EnvCommand.__doc__.capitalize())
+    p.set_defaults(cmd=cmd, ctor=EnvCommand)
     vs = p.add_subparsers(title='Variants')
 
-    ls = vs.add_parser('ls', parents=[common], help=run_ls.__doc__,
-                       description=run_ls.__doc__.capitalize())
-    ls.add_argument('-f', '--format', choices=sorted(FORMATS),
+    ls = parser_for('ls', vs, common)
+    ls.add_argument('-f', '--format', choices=EnvCommand.FORMATS,
                     default='human',
                     help='how to output the environment (default human)')
     ls.add_argument('revision', metavar='REVISION', nargs='?', type=int,
                     help='version of the environment (default latest)')
-    ls.set_defaults(func=run_ls)
 
-    set = vs.add_parser('set', parents=[common], help=run_set.__doc__,
-                           description=run_set.__doc__.capitalize())
+    set = parser_for('set', vs, common)
     set.add_argument('bindings', metavar='VAR=VALUE', nargs='+',
                      type=utils.binding_arg,
                      help='bindings to add to environment')
-    set.set_defaults(func=run_set)
 
-    rm =vs.add_parser('rm', parents=[common], help=run_rm.__doc__,
-                      description=run_rm.__doc__.capitalize())
+    rm = parser_for('rm', vs, common)
     rm.add_argument('variables', metavar='VAR', nargs='+',
                     help='variables to remove from environment')
-    rm.set_defaults(func=run_rm)
 
-    log = vs.add_parser('log', parents=[common],
-                         help='list changes to the environment over time')
-    log.set_defaults(func=run_log)
+    log = parser_for('log', vs, common)
 
     return p
-
-def run_ls(opts):
-    'list the values of variables in the environment'
-    i = opts.revision-1 if opts.revision else -1
-    FORMATS[opts.format](opts.app.envs[i].env)
-
-def show_sh(e):
-    for k, v in e.iteritems():
-        print("%s='%s'; export %s;" % (k, v, k))
-
-def show_csh(e):
-    for k, v in e.iteritems():
-        print("setenv %s '%s';" % (k, v))
-
-def show_json(e):
-    print(json.dumps(e))
-
-def show_human(e):
-    w = max([len(k) for k in e])
-    for k in sorted(e):
-        print('%-*s = %s' % (w, k, e[k]))
-
-FORMATS={'sh': show_sh,
-         'csh': show_csh,
-         'json': show_json,
-         'human': show_human}
-
-def run_log(opts):
-    for e in opts.app.envs:
-        print(e.version() + ': ' + e.history)
-
-def run_set(opts):
-    'add new bindings to the environment and redeploy'
-    e = copy(opts.app.envs[-1])
-    for b in opts.bindings:
-        e = e.set(b[0], b[1])
-    e.freeze()
-    opts.app.maybe_save(opts)
-    print(e.version() + ': ' + e.history)
-
-def run_rm(opts):
-    'remove bindings from the environment and redeploy'
-    e = copy(opts.app.envs[-1])
-    for v in opts.variables:
-        e = e.rm(v)
-    e.freeze()
-    opts.app.maybe_save(opts)
-    print(e.version() + ': ' + e.history)

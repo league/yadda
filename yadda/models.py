@@ -71,6 +71,12 @@ class App(object):
     def newBuild(self, *args, **kwargs):
         return Build(self, *args, **kwargs)
 
+    def envBySerial(self, serial):
+        for e in self.envs:
+            if e.serial == serial:
+                return e
+        raise IndexError
+
     @staticmethod
     def next_serial(xs):
         return 1 + max([x.serial for x in xs] or [0])
@@ -94,7 +100,7 @@ class Env(AppComponent):
         super(Env,self).__init__(app)
         self.frozen = False
         self.serial = None
-        self.env = {'YADDA': version.full}
+        self.env = {'YADDA_VERSION': version.full}
         self.history = ['initial environment']
 
     def __copy__(self):

@@ -9,7 +9,7 @@ import unittest
 
 def mkEnv(app):
     "Standardize the version number, so we can verify checksum."
-    return Env(app).set('YADDA', '1.0')
+    return Env(app).rm('YADDA_VERSION').set('YADDA', '1.0')
 
 class EnvModelTest(unittest.TestCase):
     def setUp(self):
