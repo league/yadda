@@ -5,41 +5,34 @@ from datetime import datetime
 from uuid import uuid4 as uuid
 from yadda.models import Build
 from yadda.settings import HASH_ABBREV, DOCKER
-from yadda.utils import save_cwd, dry_call, die, unlinking
+from yadda import utils
 import os
 import subprocess
 import sys
 import tempfile
 
-def build(opts, b):
-    assert(isinstance(b, Build))
-    t = b.tag()
-    log = os.path.join(tempfile.gettempdir(),
-                       '%s.%s' % (t, uuid().hex[:HASH_ABBREV]))
-    with save_cwd(), unlinking(log):
-        os.chdir(b.workdir)
-        if b.app.subdir and os.path.isdir(b.app.subdir):
-            os.chdir(b.app.subdir)
-        b.build_log = ''
-        b.build_status = None
-        try:
-            # Hook to avoid executing docker during unit tests
-            if os.environ.get('YADDA_TEST_BAN') == DOCKER: return
-            p1 = subprocess.Popen('%s build -t %s . 2>&1' % (DOCKER, t),
-                                  shell=True,
-                                  stdout=subprocess.PIPE)
-            p2 = subprocess.Popen(['tee', log],
-                                  stdin=p1.stdout,
-                                  stdout=sys.stdout)
+class Docker(object):
+    def __init__(self, subprocess, filesystem, stdout=None):
+        self.subprocess = subprocess
+        self.filesystem = filesystem
+        self.stdout = stdout
+
+    def build(self, tag, dir='.'):
+        cmd = ' '.join(['docker', 'build', '-t',
+                        utils.shell_quote(tag),
+                        utils.shell_quote(dir)])
+        with self.filesystem.tempname() as tmp:
+            p1 = self.subprocess.Popen(cmd + ' 2>&1', # merge stderr with stdout
+                                       shell = True,
+                                       stdout = self.subprocess.PIPE)
+            p2 = self.subprocess.Popen(['tee', tmp],
+                                       stdin = p1.stdout,
+                                       stdout = self.stdout)
             p1.stdout.close()
             p2.communicate()
-            b.build_status = p1.wait()
-            with open(log, 'r') as h:
-                b.build_log = h.read()
-        except IOError:         # log was probably not written; ignore
-            pass
-        finally:
-            b.build_finish = datetime.now()
-            b.app.save()
-            if b.build_status != 0:
-                die('docker build failure: ' + str(b.build_status))
+            status = p1.wait()
+            try:
+                with self.filesystem.open(tmp, 'r') as h:
+                    return (status, h.read())
+            except IOError:
+                return (status, '')

@@ -85,10 +85,6 @@ def say_call(opts, cmd, call=subprocess.check_call, **kwargs):
     except subprocess.CalledProcessError as exn:
         die('command returned non-zero exit status: %d' % exn.returncode)
 
-def dry_call(opts, cmd, call=subprocess.check_call, **kwargs):
-    mesg = ' '.join(cmd) if type(cmd) == list else cmd
-    return dry_guard(opts, mesg, call, cmd, **kwargs)
-
 def dry_guard(opts, mesg, f, *args, **kwargs):
     if opts.dry_run:
         say(opts, '(not) ' + mesg)
@@ -111,10 +107,8 @@ def save_cwd():
     yield
     os.chdir(prev)
 
-@contextmanager
-def unlinking(file):
-    yield
-    try:
-        os.unlink(file)
-    except OSError:
-        pass
+SHELL_QUOTABLE = re.compile('^[ -_0-9a-zA-Z:/]*$')
+
+def shell_quote(word):
+    assert SHELL_QUOTABLE.match(word), 'quoting %r not supported' % word
+    return "'" + word + "'"

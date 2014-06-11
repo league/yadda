@@ -5,9 +5,6 @@ from mock.filesystem import MockFilesystem
 from mock.subprocess import MockSubprocess
 from uuid import uuid4 as uuid
 from yadda.git import Git
-import argparse
-import caseutils
-import os
 import unittest
 
 class NewGitTest(unittest.TestCase):
@@ -16,10 +13,10 @@ class NewGitTest(unittest.TestCase):
         self.subprocess = MockSubprocess()
         self.git = Git(filesystem = self.filesystem,
                        subprocess = self.subprocess)
-        self.filesystem.dirs.add('not-git')
-        self.filesystem.dirs.add('yes-git')
-        self.filesystem.dirs.add('yes-git/.git')
-        self.filesystem.files.add('yes-git/.git/config')
+        self.filesystem.addDir('not-git')
+        self.filesystem.addDir('yes-git')
+        self.filesystem.addDir('yes-git/.git')
+        self.filesystem.addFile('yes-git/.git/config')
 
     def test_not_working_dir(self):
         self.assertFalse(self.git.is_working_dir('not-git'))
@@ -33,7 +30,8 @@ class NewGitTest(unittest.TestCase):
         self.git.set_local_config(k, v)
         self.subprocess.assertLastCommandStartsWith('git config')
         self.subprocess.assertLastCommandContains(k)
-        self.subprocess.results['git config --local '+k] = v
+        pred = lambda c: c.startswith('git config') and k in c
+        self.subprocess.provideResult(pred, v)
         self.assertEqual(v, self.git.get_local_config(k))
 
     def test_missing_config(self):
@@ -47,18 +45,18 @@ class NewGitTest(unittest.TestCase):
         self.subprocess.assertLastCommandContains('florpid')
 
     def test_list_remotes(self):
-        self.subprocess.results['git remote'] = 'master\njunk\ntmp\n'
+        self.subprocess.provideResultEq('git remote', 'master\njunk\ntmp\n')
         self.assertEqual(['master', 'junk', 'tmp'], self.git.list_remotes())
 
     def test_set_remote_new(self):
-        self.subprocess.results['git remote'] = 'master\n'
+        self.subprocess.provideResultEq('git remote', 'master\n')
         self.git.set_remote('qa', 'localhost:zz.git')
         self.subprocess.assertLastCommandStartsWith('git remote add')
         self.subprocess.assertLastCommandContains('qa')
         self.subprocess.assertLastCommandContains('localhost:zz.git')
 
     def test_set_remote_existing(self):
-        self.subprocess.results['git remote'] = 'master\nqa\n'
+        self.subprocess.provideResultEq('git remote', 'master\nqa\n')
         self.git.set_remote('qa', 'localhost:zz.git')
         self.subprocess.assertLastCommandStartsWith('git remote set-url')
         self.subprocess.assertLastCommandContains('qa')
