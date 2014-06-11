@@ -3,6 +3,15 @@
 
 default:
 
+%.pdf: %.dot
+	dot -Tpdf <$< >$@
+
+%.dot: %.sfood
+	sfood-graph <$< >$@
+
+depends.sfood:
+	sfood -i yadda >$@
+
 clean:
 	./setup.py clean
 	sudo rm -rf build dist yadda.egg-info

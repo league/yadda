@@ -4,3 +4,5 @@
 /dist/
 /yadda.egg-info/
 /.coverage
+/depends.pdf
+/depends.sfood
