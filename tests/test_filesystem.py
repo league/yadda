@@ -6,7 +6,7 @@ import unittest
 from contextlib import closing
 from tests.mock.filesystem import MockFilesystem
 from uuid import uuid4 as uuid
-from yadda.filesystem import RealFilesystem
+from yadda.filesystem import ReadWriteFilesystem
 import os.path
 
 class BaseFilesystemTest(object):
@@ -54,7 +54,7 @@ class MockFilesystemTest(unittest.TestCase, BaseFilesystemTest):
         super(MockFilesystemTest, self).setUp()
         self.fs = MockFilesystem()
 
-class RealFilesystemTest(unittest.TestCase, BaseFilesystemTest):
+class ReadWriteFilesystemTest(unittest.TestCase, BaseFilesystemTest):
     def setUp(self):
-        super(RealFilesystemTest, self).setUp()
-        self.fs = RealFilesystem()
+        super(ReadWriteFilesystemTest, self).setUp()
+        self.fs = ReadWriteFilesystem()

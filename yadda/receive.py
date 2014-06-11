@@ -4,6 +4,9 @@
 from datetime import datetime
 from yadda.settings import HASH_ABBREV
 import os.path
+import logging
+
+log = logging.getLogger('yadda')
 
 class Receive(object):
     def __init__(self, filesystem, git, docker, appfactory):
@@ -33,7 +36,7 @@ class Receive(object):
         self.filesystem.maybe_mkdir(workdir)
         b = app.newBuild(commit, workdir=workdir)
         app.save()
-        #sayf(opts, 'Starting build {} in {}', b.tag(), workdir) #TODO: log
+        log.info('Starting build %s in %s', b.tag(), workdir)
         self.git.export(commit, workdir)
 
         # Build it with docker
@@ -48,4 +51,4 @@ class Receive(object):
         # Successful build
         r = b.newRelease()
         b.app.save()
-        #sayf(opts, 'Created %s' % r) # TODO: log
+        log.info('Created %s', r)

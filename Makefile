@@ -12,6 +12,11 @@ default:
 depends.sfood:
 	sfood -i yadda >$@
 
+.PHONY: default clean flake
+
+flake:
+	pyflakes .
+
 clean:
 	./setup.py clean
 	sudo rm -rf build dist yadda.egg-info

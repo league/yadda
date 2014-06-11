@@ -5,17 +5,23 @@
 from yadda import utils
 from yadda import version, settings
 from yadda.commands import init
-from yadda.filesystem import RealFilesystem
+from yadda.filesystem import ReadWriteFilesystem
 from yadda.git import Git
 from yadda.models import Role, AppFactory
 from yadda.receive import Receive
 import argparse
 import pkgutil
 import subprocess
+import logging
 import sys
 import yadda.commands
 
-filesystem = RealFilesystem()
+console = logging.StreamHandler()
+
+log = logging.getLogger('yadda')
+log.addHandler(console)
+
+filesystem = ReadWriteFilesystem()
 git = Git(filesystem=filesystem, subprocess=subprocess)
 appfactory = AppFactory(filesystem=filesystem, datafile=settings.DATA_FILE)
 
@@ -40,14 +46,25 @@ def main(argv=None):
     opts = args().parse_args(argv)
     if opts.dry_run and not opts.verbose:
         opts.verbose = 1
+    setLogLevel(opts)
     assert(hasattr(opts, 'cmd'))  # Verify the sub-command parsers added
     assert(hasattr(opts, 'func')) # the correct attributes
-    utils.say(opts, opts, show=utils.show_opts, level=2)
+    log.debug(opts)
 
     if opts.cmd == 'init':
         return init.pre_run(opts)
     else:
         return dispatch(opts, argv)
+
+def setLogLevel(opts):
+    fmt = ('%-5s» ' % opts.target) + '%(levelname)s: %(message)s'
+    console.setFormatter(logging.Formatter(fmt))
+    if opts.verbose == 0:
+        log.setLevel(logging.WARNING)
+    elif opts.verbose == 1:
+        log.setLevel(logging.INFO)
+    else:
+        log.setLevel(logging.DEBUG)
 
 def dispatch(opts, argv):
     opts.dispatch = ''

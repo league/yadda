@@ -3,14 +3,17 @@
 
 from yadda import settings
 from yadda import utils
-from yadda.filesystem import RealFilesystem
+from yadda.filesystem import ReadWriteFilesystem
 from yadda.git import Git
 from yadda.models import AppFactory, Role, Env
+import logging
 import os
 import subprocess
 import sys
 
-filesystem = RealFilesystem()
+log = logging.getLogger('yadda')
+
+filesystem = ReadWriteFilesystem()
 git = Git(filesystem=filesystem, subprocess=subprocess)
 appfactory = AppFactory(filesystem=filesystem, datafile=settings.DATA_FILE)
 
@@ -69,8 +72,8 @@ def run(opts):
             ov = 'target' if av == 'role' else av
             if getattr(opts, ov) != getattr(app, av):
                 txt = av+' host' if av in Role.all else av
-                utils.sayf(opts, 'changing {} {} to {}', opts.name, txt,
-                           getattr(opts, ov))
+                log.info('changing %s %s to %s', opts.name, txt,
+                         getattr(opts, ov))
                 setattr(app, av, getattr(opts, ov))
                 change = True
     except KeyError:
