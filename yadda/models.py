@@ -34,6 +34,7 @@ class AppFactory(object):
         app = App(*args, **kwargs)
         app.filesystem = self.filesystem
         app.datafile = self.datafile
+        Env(app).freeze()
         return app
 
     def list(self):
@@ -62,6 +63,7 @@ class App(object):
     def save(self):
         with closing(self.filesystem.shelve_open(self.datafile)) as sh:
             sh[self.name] = self
+        return self
 
     @staticmethod
     def next_serial(xs):

@@ -68,3 +68,12 @@ class NewGitTest(unittest.TestCase):
             ['123abc 456def refs/heads/foo\n']))
         self.assertEqual('456def', self.git.receive_master_commit(
             ['123abc 456def refs/heads/master\n']))
+
+    def test_export(self):
+        commitish = uuid().hex
+        dest = '/home/' + uuid().hex
+        self.git.export(commitish, dest)
+        self.subprocess.assertExistsCommand(
+            lambda c: c.startswith('git archive') and commitish in c)
+        self.subprocess.assertExistsCommand(
+            lambda c: dest in c)

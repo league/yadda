@@ -2,53 +2,51 @@
 # ©2014 Christopher League <league@contrapunctus.net>
 
 from datetime import datetime
-from yadda.docker import Docker
-from yadda.filesystem import RealFilesystem
-from yadda.git import Git
-from yadda.models import App, Build, Role, Release, AppFactory
-from yadda.settings import HASH_ABBREV, DATA_FILE
-from yadda.utils import die, sayf
-import argparse
-import os
-import subprocess
-import sys
+from yadda.models import Build, Release
+from yadda.settings import HASH_ABBREV
+import os.path
 
-filesystem = RealFilesystem()
-git = Git(filesystem=filesystem, subprocess=subprocess)
-docker = Docker(filesystem=filesystem, subprocess=subprocess)
-appfactory = AppFactory(filesystem=filesystem, datafile=DATA_FILE)
+class Receive(object):
+    def __init__(self, filesystem, git, docker, appfactory):
+        self.filesystem = filesystem
+        self.git = git
+        self.docker = docker
+        self.appfactory = appfactory
 
-def run(home=os.environ['HOME'], input=sys.stdin):
-    commit = git.receive_master_commit(input)
-    if not commit:
-        print('Note: No update to master')
-        sys.exit(0)
-    name, ext = os.path.splitext(os.path.basename(os.getcwd()))
-    try:
-        app = appfactory.load(name)
-    except KeyError:
-        die('Warning: app %s not configured, cannot deploy' % name)
+    def run(self, stdin):
+        # Determine latest commit to master
+        commit = self.git.receive_master_commit(stdin)
+        if not commit:
+            print('Note: no update to master')
+            raise SystemExit(0)
 
-    opts = argparse.Namespace(verbose=1, dry_run=False, target=app.role)
-    workdir = os.path.join(home, '%s-%s' %
-                           (name, commit[:HASH_ABBREV]))
-    if not os.path.isdir(workdir): os.mkdir(workdir)
-    b = Build(app, commit, workdir=workdir)
-    app.save()                  # checkpoint
+        # Use working-dir basename to figure out app name
+        cwd = self.filesystem.getcwd()
+        name, ext = os.path.splitext(os.path.basename(cwd))
+        try:
+            app = self.appfactory.load(name)
+        except KeyError:
+            raise SystemExit('App %s not configured; cannot deploy' % name)
 
-    sayf(opts, 'Starting build {} in {}', b.tag(), workdir)
-    subprocess.check_call(
-        'git archive "%s" | tar -x -C "%s"' % (commit, workdir),
-        shell=True
-    )
-    if b.app.subdir:
-        workdir = os.path.join(workdir, b.app.subdir)
-    b.build_status, b.build_log = docker.build(b.tag(), workdir)
-    b.build_finish = datetime.now()
-    b.app.save()
-    if b.build_status != 0:
-        die('docker build failure: ' + str(b.build_status))
+        # Check out into a fresh working dir
+        workdir = os.path.join(self.filesystem.home(),
+                               name + '-' + commit[:HASH_ABBREV])
+        self.filesystem.maybe_mkdir(workdir)
+        b = Build(app, commit, workdir=workdir)
+        app.save()
+        #sayf(opts, 'Starting build {} in {}', b.tag(), workdir) #TODO: log
+        self.git.export(commit, workdir)
 
-    r = Release(b, b.app.envs[-1])
-    b.app.save()
-    sayf(opts, 'Created %s' % r)
+        # Build it with docker
+        if b.app.subdir:
+            workdir = os.path.join(workdir, b.app.subdir)
+        b.build_status, b.build_log = self.docker.build(b.tag(), workdir)
+        b.build_finish = datetime.now()
+        b.app.save()
+        if b.build_status != 0:
+            raise SystemExit('docker build failure: %s' % b.build_status)
+
+        # Successful build
+        r = Release(b, b.app.envs[-1])
+        b.app.save()
+        #sayf(opts, 'Created %s' % r) # TODO: log

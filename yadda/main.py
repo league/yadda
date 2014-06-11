@@ -8,6 +8,7 @@ from yadda.commands import init
 from yadda.filesystem import RealFilesystem
 from yadda.git import Git
 from yadda.models import Role, App, AppFactory
+from yadda.receive import Receive
 import argparse
 import os.path
 import pkgutil
@@ -28,7 +29,7 @@ def main(argv=None):
 
     """
     if sys.argv[0].endswith('receive'):
-        return receive.run()
+        return Receive().run()
     if argv is None:
         argv = sys.argv[1:]
     opts = args().parse_args(argv)

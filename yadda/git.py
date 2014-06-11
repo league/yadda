@@ -42,3 +42,9 @@ class Git(object):
             old, new, ref = line.split()
             if ref == 'refs/heads/master':
                 return new
+
+    def export(self, commitish, dest):
+        self.subprocess.check_call(
+            'git archive "%s" | tar -x -C "%s"' % (commitish, dest),
+            shell=True
+        )

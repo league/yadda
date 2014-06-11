@@ -54,6 +54,16 @@ class MockSubprocess(object):
     def lastCommand(self):
         return self.commandString(self.lastCall()[0])
 
+    def allCommands(self):
+        for call in self._calls:
+            yield self.commandString(call[0])
+
+    def assertExistsCommand(self, pred):
+        for call in self._calls:
+            if pred(self.commandString(call[0])):
+                return
+        assert False
+
     def assertLastCommandStartsWith(self, prefix):
         cmd = self.lastCommand()
         assert cmd.startswith(prefix), \

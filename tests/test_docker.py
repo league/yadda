@@ -26,22 +26,22 @@ class DockerTest(unittest.TestCase):
         tag = uuid().hex
         buildp = lambda c: c.startswith('docker build') and tag in c
         teep = lambda c: c.startswith('tee')
-        self.subprocess.provideResult(buildp, True)
+        self.subprocess.provideResult(buildp, 0)
         self.subprocess.provideResult(teep, self.applyTee)
         self.assertEqual(self.docker.build(tag, '.'),
-                         (True, 'build transcript'))
+                         (0, 'build transcript'))
 
     def test_docker_build_no_log(self):
         tag = uuid().hex
         buildp = lambda c: c.startswith('docker build') and tag in c
-        self.subprocess.provideResult(buildp, True)
-        self.assertEqual(self.docker.build(tag, '.'), (True, ''))
+        self.subprocess.provideResult(buildp, 0)
+        self.assertEqual(self.docker.build(tag, '.'), (0, ''))
 
     def test_docker_build_fail(self):
         tag = uuid().hex
         buildp = lambda c: c.startswith('docker build') and tag in c
         teep = lambda c: c.startswith('tee')
-        self.subprocess.provideResult(buildp, False)
+        self.subprocess.provideResult(buildp, 1)
         self.subprocess.provideResult(teep, self.applyTee)
         self.assertEqual(self.docker.build(tag, '.'),
-                         (False, 'build transcript'))
+                         (1, 'build transcript'))
