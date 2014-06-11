@@ -65,6 +65,12 @@ class App(object):
             sh[self.name] = self
         return self
 
+    def newEnv(self):
+        return Env(self)
+
+    def newBuild(self, *args, **kwargs):
+        return Build(self, *args, **kwargs)
+
     @staticmethod
     def next_serial(xs):
         return 1 + max([x.serial for x in xs] or [0])
@@ -166,6 +172,9 @@ class Build(AppComponent):
         if self.image_id:
             buf += ' !' + self.image_id
         return buf
+
+    def newRelease(self):
+        return Release(self, self.app.envs[-1])
 
 class Release(AppComponent):
     def __init__(self, build, env):

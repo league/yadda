@@ -7,7 +7,7 @@ from yadda import version, settings, receive
 from yadda.commands import init
 from yadda.filesystem import RealFilesystem
 from yadda.git import Git
-from yadda.models import Role, App, AppFactory
+from yadda.models import Role, AppFactory
 from yadda.receive import Receive
 import argparse
 import os.path

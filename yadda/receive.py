@@ -2,7 +2,6 @@
 # ©2014 Christopher League <league@contrapunctus.net>
 
 from datetime import datetime
-from yadda.models import Build, Release
 from yadda.settings import HASH_ABBREV
 import os.path
 
@@ -32,7 +31,7 @@ class Receive(object):
         workdir = os.path.join(self.filesystem.home(),
                                name + '-' + commit[:HASH_ABBREV])
         self.filesystem.maybe_mkdir(workdir)
-        b = Build(app, commit, workdir=workdir)
+        b = app.newBuild(commit, workdir=workdir)
         app.save()
         #sayf(opts, 'Starting build {} in {}', b.tag(), workdir) #TODO: log
         self.git.export(commit, workdir)
@@ -47,6 +46,6 @@ class Receive(object):
             raise SystemExit('docker build failure: %s' % b.build_status)
 
         # Successful build
-        r = Release(b, b.app.envs[-1])
+        r = b.newRelease()
         b.app.save()
         #sayf(opts, 'Created %s' % r) # TODO: log
