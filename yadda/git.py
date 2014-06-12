@@ -16,7 +16,7 @@ class Git(object):
 
     def get_local_config(self, key):
         try:
-            return self.subprocess.check_output(
+            return self.subprocess.check_output_ro(
                 ['git', 'config', '--local', key]).rstrip()
         except self.subprocess.CalledProcessError:
             raise KeyError
@@ -25,7 +25,7 @@ class Git(object):
         self.subprocess.check_call(['git', 'init', '-q', '--bare', dir])
 
     def list_remotes(self):
-        return self.subprocess.check_output(['git', 'remote']).rsplit()
+        return self.subprocess.check_output_ro(['git', 'remote']).rsplit()
 
     def set_remote(self, name, url):
         if name in self.list_remotes():

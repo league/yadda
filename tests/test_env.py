@@ -1,28 +1,23 @@
 # test_env ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-from io import StringIO
-from tests.mock.filesystem import MockFilesystem
+from tests.container import TestContainer
 from uuid import uuid4 as uuid
 from yadda import main
-from yadda import settings
 from yadda.commands.env import EnvCommand
-from yadda.models import Role, AppFactory
+from yadda.models import Role
 import argparse
 import json
 import unittest
 
 class NewEnvTest(unittest.TestCase):
     def setUp(self):
-        self.filesystem = MockFilesystem()
-        self.appfactory = AppFactory(filesystem=self.filesystem,
-                                     datafile=settings.DATA_FILE)
-        self.stdout = StringIO()
-        self.container = {'stdout': self.stdout}
-        self.env = EnvCommand(self.container)
+        container = TestContainer()
+        self.stdout = container['stdout']
+        self.env = EnvCommand(container)
         self.opts = argparse.Namespace()
         self.opts.revision = None
-        self.opts.app = self.appfactory.new(uuid().hex)
+        self.opts.app = container['appfactory'].new(uuid().hex)
         self.opts.app.newEnv().set('SECRET', '19293').freeze()
 
     def test_ls_latest_json(self):
@@ -114,12 +109,12 @@ class EnvOptionsTest(unittest.TestCase):
         opts = self.args.parse_args(['env', 'set', 'FOO=123', 'BAR=abc'])
         self.assertEqual(opts.bindings, [('FOO', '123'), ('BAR', 'abc')])
 
-#    def test_set_needs_binding(self):
-#        self.assertRaises(SystemExit, main.main, ['env', 'set'])
+    def test_set_needs_binding(self):
+        self.assertRaises(SystemExit, self.args.parse_args, ['env', 'set'])
 
     def test_rm_ok(self):
         opts = self.args.parse_args(['env', 'rm', 'FOO', 'BAR'])
         self.assertEqual(opts.variables, ['FOO', 'BAR'])
 
-#    def test_rm_needs_var(self):
-#        self.assertRaises(SystemExit, main.main, ['env', 'rm'])
+    def test_rm_needs_var(self):
+        self.assertRaises(SystemExit, self.args.parse_args, ['env', 'rm'])

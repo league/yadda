@@ -18,9 +18,9 @@ class Role(object):
                    live: 'production'}
 
 class AppFactory(object):
-    def __init__(self, filesystem, datafile):
-        self.filesystem = filesystem
-        self.datafile = datafile
+    def __init__(self, container):
+        self.filesystem = container['filesystem']
+        self.datafile = container['datafile']
 
     def load(self, name):
         with closing(self.filesystem.shelve_open(self.datafile)) as sh:

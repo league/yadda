@@ -2,15 +2,9 @@
 # yadda.main ▪ Main program that dispatches to sub-commands ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-from yadda import utils
-from yadda import version, settings
-from yadda.commands.init import InitCommand
-from yadda.docker import Docker
-from yadda.filesystem import ReadWriteFilesystem
-from yadda.git import Git
-from yadda.models import Role, AppFactory
-from yadda.receive import Receive
-from yadda.subproc import RealSubprocess
+from yadda import version
+from yadda.container import LazyContainer, DryRunContainer
+from yadda.models import Role
 import argparse
 import logging
 import os
@@ -18,45 +12,54 @@ import pkgutil
 import sys
 import yadda.commands
 
-console = logging.StreamHandler()
+def main(argv=sys.argv):
+    opts = process_args(argv)
+    container, console = configure_deps(opts)
+    if opts.cmd == 'init':
+        opts.ctor(container).run(opts)
+    else:
+        determine_app(container, opts)
+        if opts.cmd == 'receive':
+            set_formatter(console, opts.app.role)
+        elif opts.target == opts.app.role: # We're in the right place
+            opts.ctor(container).run(opts)
+        else:
+            host = getattr(opts.app, opts.target)
+            if not host:
+                raise SystemExit('%s does not specify %s host; try init again?' %
+                                 (opts.app.name, opts.target))
+            argv.append('--app')
+            argv.append(opts.app.name)
+            print("TODO: ssh %s %s " + argv)
 
-log = logging.getLogger('yadda')
+def process_args(argv):
+    opts = args().parse_args(argv[1:])
+    opts.prog = argv[0]
+    if opts.cmd == 'receive' or opts.dry_run:
+        opts.verbose += 1
+    return opts
 
-def run_git_receive_hook():
-    # Receive hook doesn't directly support dry-run, but we do configure it as
-    # verbose.
-    filesystem = ReadWriteFilesystem()
-    setLogLevel(target='git', verbose=1)
-    appfactory = AppFactory(filesystem=filesystem, datafile=settings.DATA_FILE)
-    # Use working-dir basename to figure out app name.
-    cwd = filesystem.getcwd()
-    name, ext = os.path.splitext(os.path.basename(cwd))
-    try:
-        app = appfactory.load(name)
-    except KeyError:
-        raise SystemExit('App %s not configured; cannot deploy' % name)
-    # Now that we have the app info, redo log format
-    setLogLevel(target=app.role, verbose=1)
-    # Instantiate receive handler
-    subprocess = RealSubprocess()
-    git = Git(filesystem=filesystem, subprocess=subprocess)
-    docker = Docker(filesystem=filesystem, subprocess=subprocess, stdout=sys.stdout)
-    r = Receive(filesystem, git, docker, appfactory, stdout=sys.stdout)
-    r.run(app, sys.stdin)
+def configure_deps(opts):
+    container = DryRunContainer() if opts.dry_run else LazyContainer()
+    console = logging.StreamHandler()
+    set_formatter(console, None if opts.cmd == 'receive' else opts.target)
+    log = container['log']
+    log.addHandler(console)
+    if opts.verbose >= 2:
+        log.setLevel(logging.DEBUG)
+        log_opts_wrapped(log, opts)
+    elif opts.verbose == 1:
+        log.setLevel(logging.INFO)
+    else:
+        log.setLevel(logging.WARNING)
+    return container, console
 
-filesystem = ReadWriteFilesystem()
-subprocess = RealSubprocess()
-git = Git(filesystem=filesystem, subprocess=subprocess)
-appfactory = AppFactory(filesystem=filesystem, datafile=settings.DATA_FILE)
+def set_formatter(console, target):
+    prefix = target + ' » ' if target else ''
+    fmt = logging.Formatter(prefix + '%(levelname)s » %(message)s')
+    console.setFormatter(fmt)
 
-container = {}
-container['filesystem'] = filesystem
-container['git'] = git
-container['appfactory'] = appfactory
-container['stdout'] = sys.stdout
-container['subprocess'] = subprocess
-
-def wrap_opts_to_log(opts):
+def log_opts_wrapped(log, opts):
     buf = ''
     i = 0
     for k, v in vars(opts).items():
@@ -72,72 +75,16 @@ def wrap_opts_to_log(opts):
     if(buf):
         log.debug(buf)
 
-def main(argv=None):
-    """Top-level entry point for the yadda program.
-
-    We parse the command-line arguments, load the current app data (if
-    available), and then invoke the sub-command or log in to a remote target to
-    reinvoke this command.
-
-    """
-    log.addHandler(console)
-    if sys.argv[0].endswith('receive'):
-        return run_git_receive_hook()
-    if argv is None:
-        argv = sys.argv[1:]
-    opts = args().parse_args(argv)
-    opts.prog = sys.argv[0]
-    if opts.dry_run and not opts.verbose:
-        opts.verbose = 1
-    setLogLevel(opts.target, opts.verbose)
-    assert(hasattr(opts, 'cmd'))  # Verify the sub-command parsers added
-    assert(hasattr(opts, 'func')) # the correct attributes
-
-    if log.isEnabledFor(logging.DEBUG):
-        wrap_opts_to_log(opts)
-
-    if opts.cmd == 'init':
-        return InitCommand(container).run(opts)
-    else:
-        return dispatch(opts, argv)
-
-def setLogLevel(target, verbose):
-    fmt = target + ' » %(levelname)s » %(message)s'
-    console.setFormatter(logging.Formatter(fmt))
-    if verbose == 0:
-        log.setLevel(logging.WARNING)
-    elif verbose == 1:
-        log.setLevel(logging.INFO)
-    else:
-        log.setLevel(logging.DEBUG)
-
-def dispatch(opts, argv):
-    opts.dispatch = ''
-    """Load the app context, and run sub-command on designated target."""
-    if not opts.app:            # If not provided on command-line,
-        try:                    # Look in .git/config
-            utils.say(opts, 'Loading app name from .git/config')
-            opts.app = git.get_local_config('yadda.app')
-        except KeyError:
-            raise SystemExit('app name not specified in .git/config; did you init?')
+def determine_app(container, opts):
+    if not opts.app:
+        opts.app = container['git'].get_local_config('yadda.app')
+    if not opts.app:
+        cwd = container['filesystem'].getcwd()
+        opts.app, ext = os.path.splitext(os.path.basename(cwd))
     try:
-        opts.app = appfactory.load(opts.app)
-        opts.dispatch = opts.app.role
+        opts.app = container['appfactory'].load(opts.app)
     except KeyError:
-        raise SystemExit('"%s" not found in %s; retry init?' %
-                         (opts.app, settings.DATA_FILE))
-
-    if opts.target == opts.app.role: # We're in the right place
-        del opts.dispatch
-        getattr(opts.ctor(container), opts.func)(opts)
-    else:
-        host = getattr(opts.app, opts.target)
-        if not host:
-            raise SystemExit('%s does not specify %s host; try init again?' %
-                             (opts.app.name, opts.target))
-        argv.append('--app')
-        argv.append(opts.app.name)
-        utils.say_call(opts, [settings.SSH, host, 'yadda'] + argv)
+        raise SystemExit("app '%s' not configured" % opts.app)
 
 def args():
     """Specify command-line argument specification for entire program.

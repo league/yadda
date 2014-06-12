@@ -15,6 +15,9 @@ class EnvCommand(object):
     def __init__(self, container):
         self.stdout = container['stdout']
 
+    def run(self, opts):
+        getattr(self, opts.func)(opts)
+
     def run_ls(self, opts):
         'list the values of variables in the environment'
         if opts.revision:

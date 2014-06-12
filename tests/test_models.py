@@ -1,15 +1,15 @@
 # test_models ▪ Test the model classes ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-from tests.mock.filesystem import MockFilesystem
-from yadda import settings
-from yadda.models import Role, Env, Build, Release, AppFactory
+from tests.container import TestContainer
+from yadda.models import Role, Env, Build, Release
 import unittest
 
 class AppTest(unittest.TestCase):
     def setUp(self):
-        self.filesystem = MockFilesystem()
-        self.appfactory = AppFactory(self.filesystem, datafile=settings.DATA_FILE)
+        container = TestContainer()
+        self.filesystem = container['filesystem']
+        self.appfactory = container['appfactory']
 
     def mkEnv(self, app):
         "Standardize the version number, so we can verify checksum."

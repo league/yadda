@@ -1,33 +1,18 @@
 # test_receive ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-from tests.mock.filesystem import MockFilesystem
-from tests.mock.subprocess import MockSubprocess
+from tests.container import TestContainer
 from uuid import uuid4 as uuid
-from yadda import settings
-from yadda.docker import Docker
-from yadda.git import Git
-from yadda.models import AppFactory
-from yadda.receive import Receive
-import sys
+from yadda.commands.receive import Receive
 import unittest
 
 class BaseReceiveTest(unittest.TestCase):
     def setUp(self):
-        self.filesystem = MockFilesystem()
-        self.subprocess = MockSubprocess()
-        self.git = Git(filesystem=self.filesystem,
-                       subprocess=self.subprocess)
-        self.docker = Docker(filesystem=self.filesystem,
-                             subprocess=self.subprocess)
-        self.appfactory = AppFactory(filesystem=self.filesystem,
-                                     datafile=settings.DATA_FILE)
-        self.receive = Receive(filesystem=self.filesystem,
-                               git=self.git,
-                               docker=self.docker,
-                               appfactory=self.appfactory,
-                               stdout=sys.stdout)
-
+        container = TestContainer()
+        self.filesystem = container['filesystem']
+        self.subprocess = container['subprocess']
+        self.appfactory = container['appfactory']
+        self.receive = Receive(container)
         self.name = uuid().hex
         cwd = '/home/' + self.name
         self.filesystem.mkdir(cwd)

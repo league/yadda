@@ -32,6 +32,9 @@ class MockSubprocess(object):
             return r
         raise self.CalledProcessError()
 
+    def check_output_ro(self, cmd, *args, **kwargs):
+        return self.check_output(cmd, *args, **kwargs)
+
     PIPE = 'PIPE'
 
     def Popen(self, cmd, *args, **kwargs):

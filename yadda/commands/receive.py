@@ -4,17 +4,21 @@
 from datetime import datetime
 from yadda.settings import HASH_ABBREV
 import os.path
-import logging
 
-log = logging.getLogger('yadda')
+def args(cmd, subparse, common):
+    p = subparse.add_parser(cmd, help=Receive.__doc__,
+                            description=Receive.__doc__.capitalize())
+    p.set_defaults(cmd=cmd, ctor=Receive, func='run')
 
 class Receive(object):
-    def __init__(self, filesystem, git, docker, appfactory, stdout):
-        self.filesystem = filesystem
-        self.git = git
-        self.docker = docker
-        self.appfactory = appfactory
-        self.stdout = stdout
+    'used only for git receive hook'
+    def __init__(self, container):
+        self.log        = container['log']
+        self.filesystem = container['filesystem']
+        self.git        = container['git']
+        self.docker     = container['docker']
+        self.appfactory = container['appfactory']
+        self.stdout     = container['stdout']
 
     def run(self, app, stdin):
         # Determine latest commit to master
@@ -28,7 +32,7 @@ class Receive(object):
                                app.name + '-' + commit[:HASH_ABBREV])
         self.filesystem.maybe_mkdir(workdir)
         b = app.newBuild(commit, workdir=workdir)
-        log.info('Starting build %s in %s', b.tag(), workdir)
+        self.log.info('Starting build %s in %s', b.tag(), workdir)
         app.save()
         self.git.export(commit, workdir)
 
@@ -44,4 +48,4 @@ class Receive(object):
         # Successful build
         r = b.newRelease()
         b.app.save()
-        log.info('Created %s', r)
+        self.log.info('Created %s', r)
