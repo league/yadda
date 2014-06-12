@@ -12,14 +12,18 @@ class TestHandler(logging.Handler):
     def emit(self, record):
         self.records.append(record)
 
+handler = TestHandler()
+handler.setFormatter(logging.Formatter('TEST-%(levelname)s: %(message)s'))
+
+log = logging.getLogger('yadda')
+log.setLevel(logging.DEBUG)
+log.addHandler(handler)
+
 class LogSetup(unittest.TestCase):
     def setUp(self):
         super(LogSetup, self).setUp()
-        self._handler = TestHandler()
-        self._handler.setFormatter(logging.Formatter('TEST-%(levelname)s: %(message)s'))
-        log = logging.getLogger('yadda')
-        log.setLevel(logging.DEBUG)
-        log.addHandler(self._handler)
+        del handler.records[:]
 
-    def assertLastLog(self):
-        self.assertEqual(self.records[-1], 'BOO')
+    def assertInLastLog(self, elem):
+        r = handler.records[-1]
+        self.assertIn(elem, r.msg % r.args)

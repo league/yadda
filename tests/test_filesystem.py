@@ -43,6 +43,8 @@ class BaseFilesystemTest(object):
             self.assertFalse(self.fs.isdir(tmp))
             self.fs.mkdir(tmp)
             self.assertTrue(self.fs.isdir(tmp))
+            self.assertInLastLog('mkdir')
+            self.assertInLastLog(tmp)
 
     def test_shelve(self):
         with self.fs.tempname() as tmp:
@@ -52,7 +54,8 @@ class BaseFilesystemTest(object):
                 sh[k] = v
             with closing(self.fs.shelve_open(tmp)) as sh:
                 self.assertEqual(sh[k], v)
-                self.assertEqual(sh.keys(), [k])
+                self.assertEqual(len(sh.keys()), 1)
+                self.assertIn(k, sh.keys())
 
     def test_force_symlink(self):
         with self.fs.tempname() as tmp1, self.fs.tempname() as tmp2:

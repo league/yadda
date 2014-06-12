@@ -4,7 +4,7 @@
 from contextlib import closing
 from copy import copy
 from tests.mock.subprocess import Closable
-from yadda.filesystem import AugmentedFilesystem
+from yadda.filesystem import ReadOnlyFilesystem
 import tempfile
 
 class MockFileHandle(Closable):
@@ -33,7 +33,7 @@ class MockShelf(Closable):
     def keys(self):
         return self.dict.keys()
 
-class MockFilesystem(AugmentedFilesystem):
+class MockFilesystem(ReadOnlyFilesystem):
     def __init__(self):
         self._files = {}
         self._cwd = '/home'
@@ -51,15 +51,18 @@ class MockFilesystem(AugmentedFilesystem):
         return d in self._dirs
 
     def unlink(self, f):
+        super(MockFilesystem, self).unlink(f)
         try:
             del self._files[f]
         except KeyError:
             raise OSError
 
     def symlink(self, f1, f2):
+        super(MockFilesystem, self).symlink(f1, f2)
         self._links[f1] = f2
 
     def create_file_containing(self, f, content=''):
+        super(MockFilesystem, self).create_file_containing(f, content)
         self._files[f] = content
 
     def open(self, f, mode):
@@ -78,6 +81,7 @@ class MockFilesystem(AugmentedFilesystem):
             raise OSError("No such file or directory: %r" % d)
 
     def mkdir(self, d):
+        super(MockFilesystem, self).mkdir(d)
         self._dirs.add(d)
 
     def shelve_open(self, f):

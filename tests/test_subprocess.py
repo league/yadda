@@ -1,25 +1,28 @@
 # test_subprocess ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
+from tests.log_setup import LogSetup
 from yadda.subproc import RealSubprocess, NopSubprocess
-import unittest
 
 class BaseSubprocessTest(object):
     def test_check_call(self):
         self.sp.check_call('ls >/dev/null', shell=True)
+        self.assertInLastLog('ls >/dev/null')
 
     def test_check_output(self):
         self.sp.check_output('echo hi', shell=True)
+        self.assertInLastLog('echo hi')
 
     def test_check_popen(self):
         p = self.sp.Popen(['echo', 'hi'])
+        self.assertInLastLog('echo hi')
         if p:
             p.wait()
 
-class NopSubprocessTest(unittest.TestCase, BaseSubprocessTest):
+class NopSubprocessTest(LogSetup, BaseSubprocessTest):
     def setUp(self):
         self.sp = NopSubprocess()
 
-class RealSubprocessTest(unittest.TestCase, BaseSubprocessTest):
+class RealSubprocessTest(LogSetup, BaseSubprocessTest):
     def setUp(self):
         self.sp = RealSubprocess()

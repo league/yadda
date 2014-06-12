@@ -143,4 +143,6 @@ class SaveLoadTest(ReleaseTestSetup):
 
     def test_list_apps(self):
         self.a.save()
-        self.assertEqual(self.appfactory.list(), [self.a.name])
+        ls = self.appfactory.list()
+        self.assertEqual(len(ls), 1)
+        self.assertIn(self.a.name, ls)
