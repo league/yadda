@@ -7,6 +7,7 @@ import os.path
 import tempfile
 import shelve
 import logging
+import errno
 
 log = logging.getLogger('yadda')
 
@@ -24,9 +25,21 @@ class AugmentedFilesystem(object):
         if not self.isdir(d):
             self.mkdir(d)
 
+    def force_symlink(self, file1, file2):
+        'Simulate `ln -sf`, replacing `file2` if it exists already.'
+        try:
+            self.symlink(file1, file2)
+        except OSError as e:
+            if e.errno == errno.EEXIST:
+                self.unlink(file2)
+                self.symlink(file1, file2)
+
 class ReadOnlyFilesystem(AugmentedFilesystem):
+    def logSkip(self):
+        return '(skip) '        # pragma: no cover
+
     def logRW(self, fmt, *args, **kwargs):
-        log.info('(skip) ' + fmt, *args, **kwargs)
+        log.info(self.logSkip() + fmt, *args, **kwargs)
 
     def home(self):
         return os.environ['HOME']
@@ -55,39 +68,44 @@ class ReadOnlyFilesystem(AugmentedFilesystem):
     def mkdir(self, d):
         self.logRW('mkdir %s', d)
 
+    def symlink(self, f1, f2):
+        self.logRW('symlink %s %s', f1, f2)
+
     def shelve_open(self, f):
-        self.logRW('open %s', f)
-        return ReadOnlyShelf(self, shelve.open(f))
+        return ReadOnlyShelf(self, f) # pragma: no cover
 
     def create_file_containing(self, f, content=''):
         self.logRW('create %s', f)
 
 class ReadOnlyShelf(object):
-    def __init__(self, fs, rwshelf):
+    def __init__(self, fs, file):
         self.fs = fs
-        self.rwshelf = rwshelf
+        self.file = file
+        self.rwshelf = shelve.open(file)
 
     def __getitem__(self, k):
         return self.rwshelf[k]
 
     def __setitem__(self, k, v):
-        self.fs.logRW('save %s' % v)
+        self.fs.logRW('save %s to %s' % (v, self.file))
+
+    def keys(self):
+        return self.rwshelf.keys()
 
     def close(self):
         self.rwshelf.close()
 
 class ReadWriteShelf(ReadOnlyShelf):
-    def __init__(self, fs, rwshelf):
-        super(ReadWriteShelf, self).__init__(fs, rwshelf)
+    def __init__(self, fs, file):
+        super(ReadWriteShelf, self).__init__(fs, file)
 
     def __setitem__(self, k, v):
         super(ReadWriteShelf, self).__setitem__(k, v)
         self.rwshelf[k] = v
 
 class ReadWriteFilesystem(ReadOnlyFilesystem):
-    def logRW(self, fmt, *args, **kwargs):
-        # do NOT call super
-        log.info(fmt, *args, **kwargs)
+    def logSkip(self):
+        return ''
 
     def unlink(self, f):
         super(ReadWriteFilesystem, self).unlink(f)
@@ -104,9 +122,13 @@ class ReadWriteFilesystem(ReadOnlyFilesystem):
         super(ReadWriteFilesystem, self).mkdir(d)
         return os.mkdir(d)
 
+    def symlink(self, f1, f2):
+        super(ReadWriteFilesystem, self).symlink(f1, f2)
+        return os.symlink(f1, f2)
+
     def shelve_open(self, f):
-        rosh = super(ReadWriteFilesystem, self).shelve_open(f)
-        return ReadWriteShelf(self, rosh.rwshelf)
+        # do NOT call super
+        return ReadWriteShelf(self, f)
 
     def create_file_containing(self, f, content=''):
         super(ReadWriteFilesystem, self).create_file_containing(f, content)

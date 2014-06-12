@@ -2,21 +2,9 @@
 # ©2014 Christopher League <league@contrapunctus.net>
 
 from __future__ import unicode_literals
-from contextlib import contextmanager
-from yadda import settings
 import argparse
-import errno
-import os
 import re
-import subprocess
 import sys
-
-def die(mesg):
-    "Write a message to stderr, and exit the program"
-    sys.stderr.write('Fatal: ')
-    sys.stderr.write(mesg)
-    sys.stderr.write("\n")
-    exit(1)
 
 SLUG_CHARS = '-_a-z0-9'
 SLUG_RE = re.compile('^['+SLUG_CHARS+']+$')
@@ -72,41 +60,6 @@ def sayf(opts, fmt, *args):
     if opts.verbose:
         say1(opts, fmt.format(*args), sys.stdout)
         sys.stdout.flush()
-
-def say_call(opts, cmd, call=subprocess.check_call, **kwargs):
-    mesg = ' '.join(cmd) if type(cmd) == list else cmd
-    say(opts, mesg)
-    try:
-        # Hook to avoid executing ssh during unit tests
-        if(os.environ.get('YADDA_TEST_BAN') == settings.SSH and
-           isinstance(cmd, list) and
-           cmd[0] == settings.SSH):
-            return
-        return call(cmd, **kwargs)
-    except subprocess.CalledProcessError as exn:
-        die('command returned non-zero exit status: %d' % exn.returncode)
-
-def dry_guard(opts, mesg, f, *args, **kwargs):
-    if opts.dry_run:
-        say(opts, '(not) ' + mesg)
-    else:
-        say(opts, mesg)
-        return f(*args, **kwargs)
-
-def force_symlink(file1, file2):
-    'Simulate `ln -sf`, replacing `file2` if it exists already.'
-    try:
-        os.symlink(file1, file2)
-    except OSError as e:
-        if e.errno == errno.EEXIST:
-            os.remove(file2)
-            os.symlink(file1, file2)
-
-@contextmanager
-def save_cwd():
-    prev = os.getcwd()
-    yield
-    os.chdir(prev)
 
 SHELL_QUOTABLE = re.compile('^[ -_0-9a-zA-Z:/]*$')
 

@@ -2,19 +2,27 @@
 # ©2014 Christopher League <league@contrapunctus.net>
 
 from tempfile import mkdtemp
-from yadda.models import Role, App, Env, Build, Release
+from tests.mock.filesystem import MockFilesystem
+from yadda import settings
+from yadda.models import Role, App, Env, Build, Release, AppFactory
 import argparse
 import os
 import unittest
 
-def mkEnv(app):
-    "Standardize the version number, so we can verify checksum."
-    return Env(app).rm('YADDA_VERSION').set('YADDA', '1.0')
-
-class EnvModelTest(unittest.TestCase):
+class AppTest(unittest.TestCase):
     def setUp(self):
-        self.a = App('testcase', Role.dev)
-        self.e = mkEnv(self.a)
+        self.filesystem = MockFilesystem()
+        self.appfactory = AppFactory(self.filesystem, datafile=settings.DATA_FILE)
+
+    def mkEnv(self, app):
+        "Standardize the version number, so we can verify checksum."
+        return Env(app).rm('YADDA_VERSION').set('YADDA', '1.0')
+
+class EnvModelTest(AppTest):
+    def setUp(self):
+        super(EnvModelTest, self).setUp()
+        self.a = self.appfactory.new('testcase', Role.dev)
+        self.e = self.mkEnv(self.a)
 
     def test_app_str(self):
         str(self.a)
@@ -39,8 +47,14 @@ class EnvModelTest(unittest.TestCase):
         self.e.set('SECRET', 'abc123').freeze()
         self.assertTrue(isinstance(self.e.serial, int))
         self.assertTrue(self.e.timestamp)
-        self.assertEqual(1, len(self.a.envs))
-        self.assertEqual('dev.1.13308', self.e.version())
+        self.assertEqual(2, len(self.a.envs))
+        self.assertEqual('dev.2.13308', self.e.version())
+
+    def test_lookup_serial(self):
+        e1 = self.e.set('SECRET', '332229').freeze()
+        self.assertEqual(2, e1.serial)
+        e2 = self.a.envBySerial(2)
+        self.assertEqual(e1, e2)
 
     def test_copy(self):
         self.e.freeze()
@@ -51,16 +65,17 @@ class EnvModelTest(unittest.TestCase):
     def test_serial(self):
         self.e.freeze()
         self.f = self.e.set('SECRET', 'boo299').set('ZZA', 'aa').freeze()
-        self.assertEqual(2, len(self.a.envs))
-        self.assertEqual(1, self.e.serial)
-        self.assertEqual(2, self.f.serial)
-        self.assertEqual('dev.2.1e880', self.f.version())
+        self.assertEqual(3, len(self.a.envs))
+        self.assertEqual(2, self.e.serial)
+        self.assertEqual(3, self.f.serial)
+        self.assertEqual('dev.3.1e880', self.f.version())
 
 
 
-class BuildModelTest(unittest.TestCase):
+class BuildModelTest(AppTest):
     def setUp(self):
-        self.a = App('mytest')
+        super(BuildModelTest, self).setUp()
+        self.a = self.appfactory.new('mytest')
         self.b1 = Build(self.a, 'fb36c55dec633a2a901cd65f119110aed443abd6')
 
     def test_new_build(self):
@@ -77,10 +92,11 @@ class BuildModelTest(unittest.TestCase):
 
 
 
-class ReleaseTestSetup(unittest.TestCase):
+class ReleaseTestSetup(AppTest):
     def setUp(self):
-        self.a = App('fooo')
-        self.e1 = mkEnv(self.a).freeze()
+        super(ReleaseTestSetup, self).setUp()
+        self.a = self.appfactory.new('fooo')
+        self.e1 = self.mkEnv(self.a).freeze()
         self.b1 = Build(self.a, 'ab2320938')
         self.r1 = Release(self.b1, self.e1)
         self.b2 = Build(self.a, 'fc2920383')
@@ -115,38 +131,16 @@ class PickleModelsTest(ReleaseTestSetup):
             self.assertEqual(self.b, x.app)
 
 class SaveLoadTest(ReleaseTestSetup):
-    def setUp(self):
-        super(SaveLoadTest, self).setUp()
-        self.dir = mkdtemp()
-        self.file = os.path.join(self.dir, 'mydb')
-        self.opts = argparse.Namespace(dry_run=True, verbose=1,
-                                       target=Role.dev)
-
-    def tearDown(self):
-        super(SaveLoadTest, self).tearDown()
-        try:
-            os.unlink(self.file)
-        except:
-            pass
-        os.rmdir(self.dir)
-
-#    def test_save_load(self):
-#        #self.a.save()
-#        self.b = App.load(self.a.name, self.file)
-#        self.assertNotEqual(self.a, self.b)
-#        self.assertEqual(self.a.name, self.b.name)
-#        self.assertEqual(self.a.role, self.b.role)
-#        self.assertEqual(len(self.a.envs), len(self.b.envs))
-#        self.assertEqual(len(self.a.builds), len(self.b.builds))
-#        self.assertEqual(len(self.a.releases), len(self.b.releases))
-#        for x in self.b.envs + self.b.builds + self.b.releases:
-#            self.assertEqual(self.b, x.app)
+    def test_save_load(self):
+        self.a.save()
+        self.b = self.appfactory.load(self.a.name)
+        self.assertNotEqual(self.a, self.b)
+        self.assertEqual(self.a.name, self.b.name)
+        self.assertEqual(self.a.role, self.b.role)
+        self.assertEqual(len(self.a.envs), len(self.b.envs))
+        self.assertEqual(len(self.a.builds), len(self.b.builds))
+        self.assertEqual(len(self.a.releases), len(self.b.releases))
 
     def test_list_apps(self):
-        pass
-        #self.a.save()
-        #self.assertEqual(App.list(self.file), [self.a.name])
-
-    def test_dry_save(self):
-        #self.a.save() # TODO: maybe_save
-        self.assertFalse(os.path.isfile(self.file))
+        self.a.save()
+        self.assertEqual(self.appfactory.list(), [self.a.name])

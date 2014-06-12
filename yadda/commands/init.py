@@ -6,14 +6,15 @@ from yadda import utils
 from yadda.filesystem import ReadWriteFilesystem
 from yadda.git import Git
 from yadda.models import AppFactory, Role, Env
+from yadda.subproc import RealSubprocess
 import logging
 import os
-import subprocess
 import sys
 
 log = logging.getLogger('yadda')
 
 filesystem = ReadWriteFilesystem()
+subprocess = RealSubprocess()
 git = Git(filesystem=filesystem, subprocess=subprocess)
 appfactory = AppFactory(filesystem=filesystem, datafile=settings.DATA_FILE)
 

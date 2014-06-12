@@ -9,6 +9,7 @@ from yadda.docker import Docker
 from yadda.git import Git
 from yadda.models import AppFactory
 from yadda.receive import Receive
+import sys
 import unittest
 
 class BaseReceiveTest(unittest.TestCase):
@@ -24,7 +25,8 @@ class BaseReceiveTest(unittest.TestCase):
         self.receive = Receive(filesystem=self.filesystem,
                                git=self.git,
                                docker=self.docker,
-                               appfactory=self.appfactory)
+                               appfactory=self.appfactory,
+                               stdout=sys.stdout)
 
         self.name = uuid().hex
         cwd = '/home/' + self.name
@@ -32,44 +34,36 @@ class BaseReceiveTest(unittest.TestCase):
         self.filesystem.chdir(cwd)
 
     def test_no_master_update(self):
+        app = self.appfactory.new(self.name).save()
         try:
-            self.receive.run(stdin=['123abc 456def refs/heads/foo'])
+            self.receive.run(app, stdin=['123abc 456def refs/heads/foo'])
         except SystemExit as exn:
             self.assertEqual(exn.code, 0)
             return
         assert False, 'expected SystemExit'
 
-    def test_unknown_app(self):
-        try:
-            self.receive.run(stdin=['123abc 456def refs/heads/master'])
-        except SystemExit as exn:
-            self.assertIn('not configured', exn.args[0])
-            self.assertIn(self.name, exn.args[0])
-            return
-        assert False, 'expected SystemExit'
-
     def test_known_good_app(self):
-        self.appfactory.new(self.name).save()
+        app = self.appfactory.new(self.name).save()
         buildp = lambda c: c.startswith('docker build')
         self.subprocess.provideResult(buildp, 0)
-        self.receive.run(stdin=['123abc 456def refs/heads/master'])
+        self.receive.run(app, stdin=['123abc 456def refs/heads/master'])
         self.filesystem.assertExistsDir(lambda d: self.name in d and '456de' in d)
         self.subprocess.assertExistsCommand(lambda c: c.startswith('git archive'))
         self.subprocess.assertExistsCommand(lambda c: c.startswith('docker build'))
 
     def test_subdir_app(self):
-        self.appfactory.new(self.name, subdir='ex/py').save()
+        app = self.appfactory.new(self.name, subdir='ex/py').save()
         buildp = lambda c: c.startswith('docker build')
         self.subprocess.provideResult(buildp, 0)
-        self.receive.run(stdin=['123abc 456def refs/heads/master'])
+        self.receive.run(app, stdin=['123abc 456def refs/heads/master'])
         self.filesystem.assertExistsDir(lambda d: self.name in d and '456de' in d)
 
     def test_broken_build(self):
-        self.appfactory.new(self.name).save()
+        app = self.appfactory.new(self.name).save()
         buildp = lambda c: c.startswith('docker build')
         self.subprocess.provideResult(buildp, 1)
         try:
-            self.receive.run(stdin=['123abc 456def refs/heads/master'])
+            self.receive.run(app, stdin=['123abc 456def refs/heads/master'])
         except SystemExit as exn:
             self.assertIn('docker build failure', exn.args[0])
             return

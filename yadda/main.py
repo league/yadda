@@ -5,23 +5,47 @@
 from yadda import utils
 from yadda import version, settings
 from yadda.commands import init
+from yadda.docker import Docker
 from yadda.filesystem import ReadWriteFilesystem
 from yadda.git import Git
 from yadda.models import Role, AppFactory
 from yadda.receive import Receive
+from yadda.subproc import RealSubprocess
 import argparse
-import pkgutil
-import subprocess
 import logging
+import os
+import pkgutil
 import sys
 import yadda.commands
 
 console = logging.StreamHandler()
 
 log = logging.getLogger('yadda')
-log.addHandler(console)
+
+def run_git_receive_hook():
+    # Receive hook doesn't directly support dry-run, but we do configure it as
+    # verbose.
+    filesystem = ReadWriteFilesystem()
+    setLogLevel(target='git', verbose=1)
+    appfactory = AppFactory(filesystem=filesystem, datafile=settings.DATA_FILE)
+    # Use working-dir basename to figure out app name.
+    cwd = filesystem.getcwd()
+    name, ext = os.path.splitext(os.path.basename(cwd))
+    try:
+        app = appfactory.load(name)
+    except KeyError:
+        raise SystemExit('App %s not configured; cannot deploy' % name)
+    # Now that we have the app info, redo log format
+    setLogLevel(target=app.role, verbose=1)
+    # Instantiate receive handler
+    subprocess = RealSubprocess()
+    git = Git(filesystem=filesystem, subprocess=subprocess)
+    docker = Docker(filesystem=filesystem, subprocess=subprocess, stdout=sys.stdout)
+    r = Receive(filesystem, git, docker, appfactory, stdout=sys.stdout)
+    r.run(app, sys.stdin)
 
 filesystem = ReadWriteFilesystem()
+subprocess = RealSubprocess()
 git = Git(filesystem=filesystem, subprocess=subprocess)
 appfactory = AppFactory(filesystem=filesystem, datafile=settings.DATA_FILE)
 
@@ -39,14 +63,15 @@ def main(argv=None):
     reinvoke this command.
 
     """
+    log.addHandler(console)
     if sys.argv[0].endswith('receive'):
-        return Receive().run()
+        return run_git_receive_hook()
     if argv is None:
         argv = sys.argv[1:]
     opts = args().parse_args(argv)
     if opts.dry_run and not opts.verbose:
         opts.verbose = 1
-    setLogLevel(opts)
+    setLogLevel(opts.target, opts.verbose)
     assert(hasattr(opts, 'cmd'))  # Verify the sub-command parsers added
     assert(hasattr(opts, 'func')) # the correct attributes
     log.debug(opts)
@@ -56,12 +81,12 @@ def main(argv=None):
     else:
         return dispatch(opts, argv)
 
-def setLogLevel(opts):
-    fmt = ('%-5s» ' % opts.target) + '%(levelname)s: %(message)s'
+def setLogLevel(target, verbose):
+    fmt = ('%-5s» ' % target) + '%(levelname)s: %(message)s'
     console.setFormatter(logging.Formatter(fmt))
-    if opts.verbose == 0:
+    if verbose == 0:
         log.setLevel(logging.WARNING)
-    elif opts.verbose == 1:
+    elif verbose == 1:
         log.setLevel(logging.INFO)
     else:
         log.setLevel(logging.DEBUG)
@@ -74,13 +99,13 @@ def dispatch(opts, argv):
             utils.say(opts, 'Loading app name from .git/config')
             opts.app = git.get_local_config('yadda.app')
         except KeyError:
-            utils.die('app name not specified in .git/config; did you init?')
+            raise SystemExit('app name not specified in .git/config; did you init?')
     try:
         opts.app = appfactory.load(opts.app)
         opts.dispatch = opts.app.role
     except KeyError:
-        utils.die('"%s" not found in %s; retry init?' %
-                  (opts.app, settings.DATA_FILE))
+        raise SystemExit('"%s" not found in %s; retry init?' %
+                         (opts.app, settings.DATA_FILE))
 
     if opts.target == opts.app.role: # We're in the right place
         del opts.dispatch
@@ -91,8 +116,8 @@ def dispatch(opts, argv):
     else:
         host = getattr(opts.app, opts.target)
         if not host:
-            utils.die('%s does not specify %s host; try init again?' %
-                      (opts.app.name, opts.target))
+            raise SystemExit('%s does not specify %s host; try init again?' %
+                             (opts.app.name, opts.target))
         argv.append('--app')
         argv.append(opts.app.name)
         utils.say_call(opts, [settings.SSH, host, 'yadda'] + argv)

@@ -1,9 +1,8 @@
 # test_filesystem ▪ Ensure filesystem methods are implemented ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-import unittest
-
 from contextlib import closing
+from tests.log_setup import LogSetup
 from tests.mock.filesystem import MockFilesystem
 from uuid import uuid4 as uuid
 from yadda.filesystem import ReadWriteFilesystem
@@ -24,6 +23,11 @@ class BaseFilesystemTest(object):
             self.fs.create_file_containing(tmp, 'blargh')
             with self.fs.open(tmp, 'r') as h:
                 self.assertEqual(h.read(), 'blargh')
+
+    def test_open_write(self):
+        with self.fs.tempname() as tmp:
+            with self.fs.open(tmp, 'w') as h:
+                h.write('blah')
 
     def test_chdir(self):
         d = self.fs.home()
@@ -48,13 +52,23 @@ class BaseFilesystemTest(object):
                 sh[k] = v
             with closing(self.fs.shelve_open(tmp)) as sh:
                 self.assertEqual(sh[k], v)
+                self.assertEqual(sh.keys(), [k])
 
-class MockFilesystemTest(unittest.TestCase, BaseFilesystemTest):
+    def test_force_symlink(self):
+        with self.fs.tempname() as tmp1, self.fs.tempname() as tmp2:
+            self.fs.force_symlink(tmp1, tmp2)
+
+    def test_force_existing_symlink(self):
+        with self.fs.tempname() as tmp1, self.fs.tempname() as tmp2:
+            self.fs.create_file_containing(tmp2, '')
+            self.fs.force_symlink(tmp1, tmp2)
+
+class MockFilesystemTest(LogSetup, BaseFilesystemTest):
     def setUp(self):
         super(MockFilesystemTest, self).setUp()
         self.fs = MockFilesystem()
 
-class ReadWriteFilesystemTest(unittest.TestCase, BaseFilesystemTest):
+class ReadWriteFilesystemTest(LogSetup, BaseFilesystemTest):
     def setUp(self):
         super(ReadWriteFilesystemTest, self).setUp()
         self.fs = ReadWriteFilesystem()

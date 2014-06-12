@@ -2,32 +2,43 @@
 # ©2014 Christopher League <league@contrapunctus.net>
 
 from contextlib import closing
+from copy import copy
 from tests.mock.subprocess import Closable
 from yadda.filesystem import AugmentedFilesystem
 import tempfile
 
 class MockFileHandle(Closable):
-    def __init__(self, content):
-        self.content = content
+    def __init__(self, fs, f, mode):
+        self.fs = fs
+        self.f = f
+        if mode == 'w':
+            fs._files[f] = ''
 
     def read(self):
-        return self.content
+        return self.fs._files[self.f]
+
+    def write(self, s):
+        self.fs._files[self.f] += s
 
 class MockShelf(Closable):
     def __init__(self, dict):
         self.dict = dict
 
     def __getitem__(self, k):
-        return self.dict[k]
+        return copy(self.dict[k])
 
     def __setitem__(self, k, v):
         self.dict[k] = v
+
+    def keys(self):
+        return self.dict.keys()
 
 class MockFilesystem(AugmentedFilesystem):
     def __init__(self):
         self._files = {}
         self._cwd = '/home'
         self._dirs = set([self._cwd, tempfile.gettempdir()])
+        self._links = {}
         self._apps = {}
 
     def home(self):
@@ -45,15 +56,17 @@ class MockFilesystem(AugmentedFilesystem):
         except KeyError:
             raise OSError
 
+    def symlink(self, f1, f2):
+        self._links[f1] = f2
+
     def create_file_containing(self, f, content=''):
         self._files[f] = content
 
     def open(self, f, mode):
-        assert mode == 'r'
-        try:
-            return closing(MockFileHandle(self._files[f]))
-        except KeyError:
+        assert mode in ['r', 'w']
+        if mode == 'r' and f not in self._files:
             raise IOError
+        return closing(MockFileHandle(self, f, mode))
 
     def getcwd(self):
         return self._cwd

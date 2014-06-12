@@ -31,7 +31,8 @@ class EnvCommand(object):
         self.stdout.write('\n')
 
     def show_json(self, env):
-        if sys.version_info.major == 3: # Grr, can't find a way to please both
+        # Grr, can't find a way to please both
+        if sys.version_info.major == 3: # pragma: no cover
             self.stdout.write(json.dumps(env, ensure_ascii=False))
         else:
             self.stdout.write(unicode(json.dumps(env)))

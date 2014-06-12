@@ -9,9 +9,6 @@ import argparse
 import unittest
 
 class ArgsTest(unittest.TestCase):
-    def test_die(self):
-        self.assertRaises(SystemExit, utils.die, "just kidding")
-
     def test_slug_ok(self):
         utils.slug_arg('foo91')
 
@@ -72,12 +69,3 @@ class SayTest(unittest.TestCase):
         with closing(StringIO()) as out:
             utils.say(self.opts, ['a','b'], lambda x: x, out=out)
             self.assertEqual('dev  » a\ndev  » b\n', out.getvalue())
-
-    def test_say_call(self):
-        utils.say_call(self.opts, ['echo', '-n', 'call'])
-
-    def test_say_call_not_exist(self):
-        self.assertRaises(OSError, utils.say_call, self.opts, ['azeonuaoe'])
-
-    def test_say_call_err_code(self):
-        self.assertRaises(SystemExit, utils.say_call, self.opts, ['false'])

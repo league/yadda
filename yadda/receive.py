@@ -9,34 +9,27 @@ import logging
 log = logging.getLogger('yadda')
 
 class Receive(object):
-    def __init__(self, filesystem, git, docker, appfactory):
+    def __init__(self, filesystem, git, docker, appfactory, stdout):
         self.filesystem = filesystem
         self.git = git
         self.docker = docker
         self.appfactory = appfactory
+        self.stdout = stdout
 
-    def run(self, stdin):
+    def run(self, app, stdin):
         # Determine latest commit to master
         commit = self.git.receive_master_commit(stdin)
         if not commit:
-            print('Note: no update to master')
-            raise SystemExit(0)
-
-        # Use working-dir basename to figure out app name
-        cwd = self.filesystem.getcwd()
-        name, ext = os.path.splitext(os.path.basename(cwd))
-        try:
-            app = self.appfactory.load(name)
-        except KeyError:
-            raise SystemExit('App %s not configured; cannot deploy' % name)
+            self.stdout.write('Note: no update to master\n')
+            raise SystemExit(0) # Return 0 so it doesn't abort push
 
         # Check out into a fresh working dir
         workdir = os.path.join(self.filesystem.home(),
-                               name + '-' + commit[:HASH_ABBREV])
+                               app.name + '-' + commit[:HASH_ABBREV])
         self.filesystem.maybe_mkdir(workdir)
         b = app.newBuild(commit, workdir=workdir)
-        app.save()
         log.info('Starting build %s in %s', b.tag(), workdir)
+        app.save()
         self.git.export(commit, workdir)
 
         # Build it with docker
