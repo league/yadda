@@ -21,6 +21,8 @@ class BaseSubprocess(object):
     def Popen(self, cmd, *args, **kwargs):
         self.logCmd(cmd)
 
+    PIPE = subprocess.PIPE
+
 class NopSubprocess(BaseSubprocess):
     def logSkip(self):
         return '(skip) '
