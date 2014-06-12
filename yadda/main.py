@@ -4,7 +4,7 @@
 
 from yadda import utils
 from yadda import version, settings
-from yadda.commands import init
+from yadda.commands.init import InitCommand
 from yadda.docker import Docker
 from yadda.filesystem import ReadWriteFilesystem
 from yadda.git import Git
@@ -54,6 +54,23 @@ container['filesystem'] = filesystem
 container['git'] = git
 container['appfactory'] = appfactory
 container['stdout'] = sys.stdout
+container['subprocess'] = subprocess
+
+def wrap_opts_to_log(opts):
+    buf = ''
+    i = 0
+    for k, v in vars(opts).items():
+        if k == 'func':
+            continue
+        z = '%s=%r ' % (k, v)
+        if i > 0 and i+len(z) > 64:
+            log.debug(buf)
+            buf = ''
+            i = 0
+        buf += z
+        i += len(z)
+    if(buf):
+        log.debug(buf)
 
 def main(argv=None):
     """Top-level entry point for the yadda program.
@@ -69,20 +86,23 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
     opts = args().parse_args(argv)
+    opts.prog = sys.argv[0]
     if opts.dry_run and not opts.verbose:
         opts.verbose = 1
     setLogLevel(opts.target, opts.verbose)
     assert(hasattr(opts, 'cmd'))  # Verify the sub-command parsers added
     assert(hasattr(opts, 'func')) # the correct attributes
-    log.debug(opts)
+
+    if log.isEnabledFor(logging.DEBUG):
+        wrap_opts_to_log(opts)
 
     if opts.cmd == 'init':
-        return init.pre_run(opts)
+        return InitCommand(container).run(opts)
     else:
         return dispatch(opts, argv)
 
 def setLogLevel(target, verbose):
-    fmt = ('%-5s» ' % target) + '%(levelname)s: %(message)s'
+    fmt = target + ' » %(levelname)s » %(message)s'
     console.setFormatter(logging.Formatter(fmt))
     if verbose == 0:
         log.setLevel(logging.WARNING)
@@ -109,10 +129,7 @@ def dispatch(opts, argv):
 
     if opts.target == opts.app.role: # We're in the right place
         del opts.dispatch
-        if hasattr(opts, 'ctor'):
-            getattr(opts.ctor(container), opts.func)(opts)
-        else:
-            opts.func(opts)
+        getattr(opts.ctor(container), opts.func)(opts)
     else:
         host = getattr(opts.app, opts.target)
         if not host:

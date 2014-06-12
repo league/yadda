@@ -32,10 +32,10 @@ class EnvCommand(object):
 
     def show_json(self, env):
         # Grr, can't find a way to please both
-        if sys.version_info.major == 3: # pragma: no cover
-            self.stdout.write(json.dumps(env, ensure_ascii=False))
+        if sys.version_info.major == 3:
+            self.stdout.write(json.dumps(env, ensure_ascii=False)) # pragma: no cover
         else:
-            self.stdout.write(unicode(json.dumps(env)))
+            self.stdout.write(unicode(json.dumps(env))) # pragma: no cover
 
     def gen_csh(self, env):
         for k, v in env.items():

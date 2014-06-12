@@ -26,15 +26,6 @@ def binding_arg(s):
         return (m.group(1), m.group(2))
     raise argparse.ArgumentTypeError("must match VAR=VALUE pattern")
 
-def show_opts(opts):
-    "Output generator for an options namespace"
-    assert(isinstance(opts, argparse.Namespace))
-    d = vars(opts)
-    w = max([len(k) for k in d])
-    for k, v in d.items():
-        if not str(v).startswith('<'):
-            yield 'option %-*s = %s' % (w, k, v)
-
 def say1(opts, line, out=sys.stdout):
     "Write one-line message to `out`, with newline"
     out.write('%-5s» ' % (opts.dispatch if hasattr(opts,'dispatch')

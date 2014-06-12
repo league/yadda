@@ -1,12 +1,9 @@
 # test_models ▪ Test the model classes ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-from tempfile import mkdtemp
 from tests.mock.filesystem import MockFilesystem
 from yadda import settings
-from yadda.models import Role, App, Env, Build, Release, AppFactory
-import argparse
-import os
+from yadda.models import Role, Env, Build, Release, AppFactory
 import unittest
 
 class AppTest(unittest.TestCase):

@@ -28,19 +28,6 @@ class ArgsTest(unittest.TestCase):
     def test_binding_arg_fail(self):
         self.assertRaises(argparse.ArgumentTypeError, utils.binding_arg, "FOO")
 
-class ShowOptsTest(unittest.TestCase):
-    def setUp(self):
-        self.opts = argparse.Namespace(foo='bar', bazzz=True)
-
-    def test_requires_namespace(self):
-        self.assertRaises(AssertionError, list, utils.show_opts({}))
-
-    def test_string_gen(self):
-        g = utils.show_opts(self.opts)
-        self.assertEqual('option bazzz = True', next(g))
-        self.assertEqual('option foo   = bar', next(g))
-        self.assertRaises(StopIteration, next, g)
-
 class SayTest(unittest.TestCase):
 
     def setUp(self):
