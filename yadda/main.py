@@ -15,13 +15,15 @@ import yadda.commands
 def main(argv=sys.argv):
     opts = process_args(argv)
     container = DryRunContainer() if opts.dry_run else LazyContainer()
-    console = configure_deps(container, opts)
+    configure_deps(container, opts)
+    run(argv, container, opts)
+
+def run(argv, container, opts):
     if opts.cmd == 'init':
         opts.ctor(container).run(opts)
     else:
         determine_app(container, opts)
         if opts.cmd == 'receive':
-            set_formatter(console, opts.app.role)
             opts.ctor(container).run(opts)
         elif opts.target == opts.app.role: # We're in the right place
             opts.ctor(container).run(opts)
@@ -30,9 +32,9 @@ def main(argv=sys.argv):
             if not host:
                 raise SystemExit('%s does not specify %s host; try init again?' %
                                  (opts.app.name, opts.target))
-            argv.append('--app')
+            argv.append('--app') # maybe should strip -a/--app from argv 1st?
             argv.append(opts.app.name)
-            print("TODO: ssh %s %s " % (host, argv[1:]))
+            container['subprocess'].check_call(['ssh', host, 'yadda'] + argv[1:])
 
 def process_args(argv):
     if argv[0].endswith('receive'):

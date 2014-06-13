@@ -20,8 +20,10 @@ class Receive(object):
         self.docker     = container['docker']
         self.appfactory = container['appfactory']
         self.stdout     = container['stdout']
+        self.stdin      = container['stdin']
 
-    def run(self, opts, stdin=sys.stdin):
+    def run(self, opts, stdin=None):
+        stdin = stdin or self.stdin
         # Determine latest commit to master
         commit = self.git.receive_master_commit(stdin)
         if not commit:

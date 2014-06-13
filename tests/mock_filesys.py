@@ -2,9 +2,9 @@
 # ©2014 Christopher League <league@contrapunctus.net>
 
 from contextlib import closing
-from copy import copy
 from tests.mock_subproc import Closable
 from yadda.filesystem import ReadOnlyFilesystem
+import pickle
 import tempfile
 
 class MockFileHandle(Closable):
@@ -25,10 +25,10 @@ class MockShelf(Closable):
         self.dict = dict
 
     def __getitem__(self, k):
-        return copy(self.dict[k])
+        return pickle.loads(self.dict[k])
 
     def __setitem__(self, k, v):
-        self.dict[k] = v
+        self.dict[k] = pickle.dumps(v)
 
     def keys(self):
         return self.dict.keys()

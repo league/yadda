@@ -25,6 +25,43 @@ class MainTest(unittest.TestCase):
             if k not in ['prog', 'ctor']:
                 self.assertEqual(getattr(opts2, k), v)
 
+class MainRunTest(unittest.TestCase):
+    def setUp(self):
+        self.container = AltLogTestContainer()
+        self.name = uuid().hex
+        self.appfactory = self.container['appfactory']
+        self.app = self.appfactory.new(self.name, qa='frobnozz')
+        self.appfactory.save(self.app)
+        self.subprocess = self.container['subprocess']
+        self.filesystem = self.container['filesystem']
+        self.filesystem.mkdir(self.name)
+        self.filesystem.chdir(self.name)
+
+    def test_run_init(self):
+        opts = main.process_args(['yadda', 'init', self.name])
+        main.run([], self.container, opts)
+
+    def test_run_receive(self):
+        self.subprocess.provideResult(lambda c: c.startswith("docker build"), 0)
+        self.container.stdin = ["aaaaaaa bbbbbbb refs/heads/master\n"]
+        opts = main.process_args(['yadda', 'receive'])
+        opts.app = self.name
+        main.run(['pre-receive'], self.container, opts)
+
+    def test_run_env_ls(self):
+        opts = main.process_args(['yadda', 'env', 'ls', '-a', self.name])
+        main.run([], self.container, opts)
+
+    def test_other_target(self):
+        opts = main.process_args(['yadda', 'env', 'ls', '-t', 'qa', '-a', self.name])
+        main.run([], self.container, opts)
+
+    def test_other_target_unknown(self):
+        self.app.qa = None
+        self.appfactory.save(self.app)
+        opts = main.process_args(['yadda', 'env', 'ls', '-t', 'qa', '-a', self.name])
+        self.assertRaises(SystemExit, main.run, [], self.container, opts)
+
 class MainOptsTest(LogSetup):
     def setUp(self):
         container = TestContainer()

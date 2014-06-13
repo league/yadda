@@ -26,6 +26,9 @@ class LazyContainer(object):
     def setup_stdout(self):
         return sys.stdout
 
+    def setup_stdin(self):
+        return sys.stdin        # pragma: no cover
+
     def setup_datafile(self):
         return os.path.join(self['filesystem'].home(), '.yadda.data')
 
