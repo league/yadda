@@ -54,7 +54,7 @@ def configure_deps(container, opts):
         log.setLevel(logging.INFO)
     else:
         log.setLevel(logging.WARNING)
-    return container, console
+    return console
 
 def set_formatter(console, target):
     prefix = target + ' » ' if target else ''

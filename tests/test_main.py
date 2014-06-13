@@ -6,6 +6,7 @@ from tests.log_setup import LogSetup
 from uuid import uuid4 as uuid
 from yadda import main
 import argparse
+import logging
 import unittest
 
 class MainTest(unittest.TestCase):
@@ -85,7 +86,8 @@ class MainDepsTest(unittest.TestCase):
         self.container = AltLogTestContainer()
 
     def test_deps_v0(self):
-        main.configure_deps(self.container, self.opts)
+        r = main.configure_deps(self.container, self.opts)
+        self.assertTrue(isinstance(r, logging.StreamHandler))
 
     def test_deps_v1(self):
         self.opts.verbose = 1
