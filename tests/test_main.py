@@ -52,7 +52,8 @@ class MainDetermineAppTest(unittest.TestCase):
         self.filesystem = self.container['filesystem']
         self.subprocess = self.container['subprocess']
         self.appfactory = self.container['appfactory']
-        self.appfactory.new(self.name).save()
+        a = self.appfactory.new(self.name)
+        self.appfactory.save(a)
 
     def test_given(self):
         self.opts.app = self.name

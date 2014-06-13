@@ -25,15 +25,13 @@ class AppFactory(object):
     def load(self, name):
         with closing(self.filesystem.shelve_open(self.datafile)) as sh:
             app = sh[name]
-            assert(isinstance(app, App))
-            app.filesystem = self.filesystem
-            app.datafile = self.datafile
+            assert isinstance(app, App)
+            assert not hasattr(app, 'filesystem')
+            assert not hasattr(app, 'datafile')
             return app
 
     def new(self, *args, **kwargs):
         app = App(*args, **kwargs)
-        app.filesystem = self.filesystem
-        app.datafile = self.datafile
         Env(app).freeze()
         return app
 
@@ -41,6 +39,9 @@ class AppFactory(object):
         with closing(self.filesystem.shelve_open(self.datafile)) as sh:
             return sh.keys()
 
+    def save(self, app):
+        with closing(self.filesystem.shelve_open(self.datafile)) as sh:
+            sh[app.name] = app
 
 class App(object):
     def __init__(self, name, role=Role.dev, qa=None, live=None,
@@ -59,11 +60,6 @@ class App(object):
 
     def __str__(self):
         return self.name
-
-    def save(self):
-        with closing(self.filesystem.shelve_open(self.datafile)) as sh:
-            sh[self.name] = self
-        return self
 
     def newEnv(self):
         return Env(self)

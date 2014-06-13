@@ -56,12 +56,14 @@ class InitTest(unittest.TestCase):
         self.init.run(self.opts)
 
     def test_run_already_exists(self):
-        self.appfactory.new(self.opts.name).save()
+        a = self.appfactory.new(self.opts.name)
+        self.appfactory.save(a)
         self.init.run(self.opts)
 
     def test_run_exists_change_role(self):
         self.opts.target = Role.qa
-        self.appfactory.new(self.opts.name).save()
+        a = self.appfactory.new(self.opts.name)
+        self.appfactory.save(a)
         self.init.run(self.opts)
 
     def test_run_git_working_dir(self):

@@ -21,7 +21,8 @@ class BaseReceiveTest(unittest.TestCase):
         self.opts = argparse.Namespace()
 
     def test_no_master_update(self):
-        app = self.appfactory.new(self.name).save()
+        app = self.appfactory.new(self.name)
+        self.appfactory.save(app)
         try:
             self.receive.run(app, stdin=['123abc 456def refs/heads/foo'])
         except SystemExit as exn:
@@ -30,7 +31,8 @@ class BaseReceiveTest(unittest.TestCase):
         assert False, 'expected SystemExit'
 
     def test_known_good_app(self):
-        self.opts.app = self.appfactory.new(self.name).save()
+        self.opts.app = self.appfactory.new(self.name)
+        self.appfactory.save(self.opts.app)
         buildp = lambda c: c.startswith('docker build')
         self.subprocess.provideResult(buildp, 0)
         self.receive.run(self.opts, stdin=['123abc 456def refs/heads/master'])
@@ -39,14 +41,16 @@ class BaseReceiveTest(unittest.TestCase):
         self.subprocess.assertExistsCommand(lambda c: c.startswith('docker build'))
 
     def test_subdir_app(self):
-        self.opts.app = self.appfactory.new(self.name, subdir='ex/py').save()
+        self.opts.app = self.appfactory.new(self.name, subdir='ex/py')
+        self.appfactory.save(self.opts.app)
         buildp = lambda c: c.startswith('docker build')
         self.subprocess.provideResult(buildp, 0)
         self.receive.run(self.opts, stdin=['123abc 456def refs/heads/master'])
         self.filesystem.assertExistsDir(lambda d: self.name in d and '456de' in d)
 
     def test_broken_build(self):
-        self.opts.app = self.appfactory.new(self.name).save()
+        self.opts.app = self.appfactory.new(self.name)
+        self.appfactory.save(self.opts.app)
         buildp = lambda c: c.startswith('docker build')
         self.subprocess.provideResult(buildp, 1)
         try:

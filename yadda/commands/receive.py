@@ -34,7 +34,7 @@ class Receive(object):
         self.filesystem.maybe_mkdir(workdir)
         b = opts.app.newBuild(commit, workdir=workdir)
         self.log.info('Starting build %s in %s', b.tag(), workdir)
-        opts.app.save()
+        self.appfactory.save(opts.app)
         self.git.export(commit, workdir)
 
         # Build it with docker
@@ -42,11 +42,11 @@ class Receive(object):
             workdir = os.path.join(workdir, b.app.subdir)
         b.build_status, b.build_log = self.docker.build(b.tag(), workdir)
         b.build_finish = datetime.now()
-        b.app.save()
+        self.appfactory.save(b.app)
         if b.build_status != 0:
             raise SystemExit('docker build failure: %s' % b.build_status)
 
         # Successful build
         r = b.newRelease()
-        b.app.save()
+        self.appfactory.save(b.app)
         self.log.info('Created %s', r)

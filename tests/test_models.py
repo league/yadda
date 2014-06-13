@@ -1,6 +1,7 @@
 # test_models ▪ Test the model classes ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
+from contextlib import closing
 from tests.container import TestContainer
 from yadda.models import Role, Env, Build, Release
 import unittest
@@ -10,6 +11,7 @@ class AppTest(unittest.TestCase):
         container = TestContainer()
         self.filesystem = container['filesystem']
         self.appfactory = container['appfactory']
+        self.datafile = container['datafile']
 
     def mkEnv(self, app):
         "Standardize the version number, so we can verify checksum."
@@ -129,7 +131,7 @@ class PickleModelsTest(ReleaseTestSetup):
 
 class SaveLoadTest(ReleaseTestSetup):
     def test_save_load(self):
-        self.a.save()
+        self.appfactory.save(self.a)
         self.b = self.appfactory.load(self.a.name)
         self.assertNotEqual(self.a, self.b)
         self.assertEqual(self.a.name, self.b.name)
@@ -139,7 +141,7 @@ class SaveLoadTest(ReleaseTestSetup):
         self.assertEqual(len(self.a.releases), len(self.b.releases))
 
     def test_list_apps(self):
-        self.a.save()
+        self.appfactory.save(self.a)
         ls = self.appfactory.list()
         self.assertEqual(len(ls), 1)
         self.assertIn(self.a.name, ls)

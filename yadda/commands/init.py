@@ -56,7 +56,7 @@ class InitCommand(object):
                 opts.name, role=opts.target, qa=opts.qa, live=opts.live,
                 subdir=opts.subdir, database=opts.database)
         if self.change:
-            self.app.save()
+            self.appfactory.save(self.app)
         if opts.target == Role.dev:
             self.set_remote()
         elif opts.target == Role.qa:

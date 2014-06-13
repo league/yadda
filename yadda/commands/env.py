@@ -15,6 +15,7 @@ class EnvCommand(object):
 
     def __init__(self, container):
         self.stdout = container['stdout']
+        self.appfactory = container['appfactory']
 
     def run(self, opts):
         getattr(self, opts.func)(opts)
@@ -59,7 +60,7 @@ class EnvCommand(object):
 
     def modify(self, opts, func):
         e = func(opts, copy(opts.app.envs[-1])).freeze()
-        opts.app.save()
+        self.appfactory.save(opts.app)
         self.summarize_version(e)
 
     def func_set(self, opts, e):
