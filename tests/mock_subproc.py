@@ -1,9 +1,7 @@
-# tests/mock.subprocess ▪ Fake subprocess calls for testing ▪ coding: utf8
+# tests.mock_subproc ▪ Fake subprocess calls for testing ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-class Closable(object):
-    def close(self):
-        pass
+from tests.mock_closable import Closable
 
 class MockPipe(object):
     def __init__(self, result=None):

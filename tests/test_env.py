@@ -20,6 +20,11 @@ class NewEnvTest(unittest.TestCase):
         self.opts.app = container['appfactory'].new(uuid().hex)
         self.opts.app.newEnv().set('SECRET', '19293').freeze()
 
+    def test_run_dispatch(self):
+        self.opts.func = 'run_ls'
+        self.opts.format = 'json'
+        self.env.run(self.opts)
+
     def test_ls_latest_json(self):
         self.opts.format = 'json'
         self.env.run_ls(self.opts)
@@ -73,11 +78,8 @@ class NewEnvTest(unittest.TestCase):
 
 class EnvOptionsTest(unittest.TestCase):
 
-    def setUp(self):
-        self.args = main.args()
-
     def test_history_ok(self):
-        opts = self.args.parse_args(['env', 'log'])
+        opts = main.process_args(['yadda', 'env', 'log'])
         self.assertEqual(opts.verbose, 0)
         self.assertEqual(opts.dry_run, False)
         self.assertEqual(opts.target, Role.dev)
@@ -85,36 +87,42 @@ class EnvOptionsTest(unittest.TestCase):
         self.assertFalse(hasattr(opts, 'revision'))
 
     def test_show_version_ok(self):
-        opts = self.args.parse_args(['env', 'ls', '-v', '3'])
+        opts = main.process_args(['yadda', 'env', 'ls', '-v', '3'])
         self.assertTrue(hasattr(opts, 'revision'))
         self.assertEqual(opts.revision, 3)
         self.assertEqual(opts.verbose, 1)
 
     def test_show_ok(self):
-        opts = self.args.parse_args(['env', 'ls'])
+        opts = main.process_args(['yadda', 'env', 'ls'])
         self.assertEqual(opts.revision, None)
 
     def test_target_first(self):
-        opts = self.args.parse_args(['-t', Role.qa, 'env', 'ls'])
+        opts = main.process_args(['yadda', '-t', Role.qa, 'env', 'ls'])
         self.assertEqual(opts.target, Role.qa)
 
     def test_target_middle(self):
-        opts = self.args.parse_args(['env', '-t', Role.live, 'ls'])
+        opts = main.process_args(['yadda', 'env', '-t', Role.live, 'ls'])
         self.assertEqual(opts.target, Role.live)
 
     def test_target_last(self):
-        self.args.parse_args(['env', 'ls', '-t', Role.qa])
+        main.process_args(['yadda', 'env', 'ls', '-t', Role.qa])
 
     def test_set_ok(self):
-        opts = self.args.parse_args(['env', 'set', 'FOO=123', 'BAR=abc'])
+        opts = main.process_args(['yadda', 'env', 'set', 'FOO=123', 'BAR=abc'])
         self.assertEqual(opts.bindings, [('FOO', '123'), ('BAR', 'abc')])
 
     def test_set_needs_binding(self):
-        self.assertRaises(SystemExit, self.args.parse_args, ['env', 'set'])
+        self.assertRaises(SystemExit, main.process_args,
+                          ['yadda', 'env', 'set'])
+
+    def test_set_binding_syntax(self):
+        self.assertRaises(SystemExit, main.process_args,
+                          ['yadda', 'env', 'set', 'FOO'])
 
     def test_rm_ok(self):
-        opts = self.args.parse_args(['env', 'rm', 'FOO', 'BAR'])
+        opts = main.process_args(['yadda', 'env', 'rm', 'FOO', 'BAR'])
         self.assertEqual(opts.variables, ['FOO', 'BAR'])
 
     def test_rm_needs_var(self):
-        self.assertRaises(SystemExit, self.args.parse_args, ['env', 'rm'])
+        self.assertRaises(SystemExit, main.process_args,
+                          ['yadda', 'env', 'rm'])

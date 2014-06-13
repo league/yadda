@@ -30,7 +30,7 @@ class LazyContainer(object):
         return os.path.join(self['filesystem'].home(), '.yadda.data')
 
     def setup_subprocess(self):
-        return RealSubprocess()
+        return RealSubprocess() # pragma: no cover
 
     def setup_filesystem(self):
         return ReadWriteFilesystem() # pragma: no cover
@@ -49,7 +49,7 @@ class LazyContainer(object):
 
 class DryRunContainer(LazyContainer):
     def setup_subprocess(self):
-        return NopSubprocess()
+        return NopSubprocess()  # pragma: no cover
 
     def setup_filesystem(self):
-        return ReadOnlyFilesystem()
+        return ReadOnlyFilesystem() # pragma: no cover

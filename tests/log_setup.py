@@ -1,4 +1,4 @@
-# tests/log_setup.py ▪ coding: utf8
+# tests.log_setup ▪ Save log records to a list ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
 import logging

@@ -3,8 +3,9 @@
 
 from __future__ import unicode_literals
 from copy import copy
-from yadda import utils
+import argparse
 import json
+import re
 import sys
 
 class EnvCommand(object):
@@ -106,13 +107,20 @@ def args(cmd, subparse, common):
 
     set = parser_for('set', vs, common)
     set.add_argument('bindings', metavar='VAR=VALUE', nargs='+',
-                     type=utils.binding_arg,
+                     type=binding_arg,
                      help='bindings to add to environment')
 
     rm = parser_for('rm', vs, common)
     rm.add_argument('variables', metavar='VAR', nargs='+',
                     help='variables to remove from environment')
 
-    log = parser_for('log', vs, common)
-
+    parser_for('log', vs, common)
     return p
+
+BINDING_RE = re.compile('^([-_a-zA-Z0-9]+)=(.*)$')
+
+def binding_arg(s):
+    m = BINDING_RE.match(s)
+    if m:
+        return (m.group(1), m.group(2))
+    raise argparse.ArgumentTypeError("must match VAR=VALUE pattern")

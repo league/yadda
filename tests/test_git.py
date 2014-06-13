@@ -1,8 +1,8 @@
 # test_git ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-from tests.mock.filesystem import MockFilesystem
-from tests.mock.subprocess import MockSubprocess
+from tests.mock_filesys import MockFilesystem
+from tests.mock_subproc import MockSubprocess
 from uuid import uuid4 as uuid
 from yadda.git import Git
 import unittest

@@ -1,9 +1,9 @@
-# tests/mock.filesystem ▪ Fake implementation of isfile, isdir ▪ coding: utf8
+# tests.mock_filesys ▪ Fake implementation of filesystem ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
 from contextlib import closing
 from copy import copy
-from tests.mock.subprocess import Closable
+from tests.mock_subproc import Closable
 from yadda.filesystem import ReadOnlyFilesystem
 import tempfile
 

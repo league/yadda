@@ -3,7 +3,7 @@
 
 from contextlib import closing
 from tests.log_setup import LogSetup
-from tests.mock.filesystem import MockFilesystem
+from tests.mock_filesys import MockFilesystem
 from uuid import uuid4 as uuid
 from yadda.filesystem import ReadWriteFilesystem
 import os.path

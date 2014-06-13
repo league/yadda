@@ -8,7 +8,7 @@ import os.path
 def args(cmd, subparse, common):
     p = subparse.add_parser(cmd, help=Receive.__doc__,
                             description=Receive.__doc__.capitalize())
-    p.set_defaults(cmd=cmd, ctor=Receive, func='run')
+    p.set_defaults(cmd=cmd, ctor=Receive)
 
 class Receive(object):
     'used only for git receive hook'

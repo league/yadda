@@ -3,10 +3,7 @@
 
 from yadda import utils
 from yadda.models import Role
-import logging
 import os
-
-log = logging.getLogger('yadda')
 
 class InitCommand(object):
     'initialize a new application'
@@ -17,6 +14,7 @@ class InitCommand(object):
         self.git        = container['git']
         self.stdout     = container['stdout']
         self.subprocess = container['subprocess']
+        self.log        = container['log']
 
     def run(self, opts):
         self.run_local(opts)
@@ -53,7 +51,7 @@ class InitCommand(object):
             self.detect_changes(opts)
         except KeyError:
             self.change = True
-            log.info('Creating app %s on %s', opts.name, opts.target)
+            self.log.info('Creating app %s on %s', opts.name, opts.target)
             self.app = self.appfactory.new(
                 opts.name, role=opts.target, qa=opts.qa, live=opts.live,
                 subdir=opts.subdir, database=opts.database)
@@ -71,7 +69,7 @@ class InitCommand(object):
                 self.git.set_remote(Role.qa, '%s:%s.git' %
                                (self.app.qa, self.app.name))
         else:
-            log.warn('could not save app name to .git/config')
+            self.log.warn('could not save app name to .git/config')
 
     def init_repo(self, opts):
         d = self.app.name + '.git'
@@ -90,15 +88,15 @@ class InitCommand(object):
         for av, ov in InitCommand.APP_VARS.items():
             if getattr(opts, ov) != getattr(self.app, av):
                 txt = av+' host' if av in Role.all else av
-                log.info('changing %s %s to %s', opts.name, txt,
-                         getattr(opts, ov))
+                self.log.info('changing %s %s to %s', opts.name, txt,
+                              getattr(opts, ov))
                 setattr(self.app, av, getattr(opts, ov))
                 self.change = True
 
 def args(cmd, subparse, common):
     p = subparse.add_parser(cmd, parents=[common], help=InitCommand.__doc__,
                             description=InitCommand.__doc__.capitalize())
-    p.set_defaults(cmd=cmd, ctor=InitCommand, func='run')
+    p.set_defaults(cmd=cmd, ctor=InitCommand)
     p.add_argument('-d', '--database', action='store_true',
                    help='link container with database')
     p.add_argument('-C', '--subdir', metavar='SUBDIR',

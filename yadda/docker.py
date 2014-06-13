@@ -1,7 +1,7 @@
 # yadda.docker ▪ Python interface to docker commands ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-from yadda import utils
+import re
 
 class Docker(object):
     def __init__(self, subprocess, filesystem, stdout=None):
@@ -11,8 +11,8 @@ class Docker(object):
 
     def build(self, tag, dir='.'):
         cmd = ' '.join(['docker', 'build', '-t',
-                        utils.shell_quote(tag),
-                        utils.shell_quote(dir)])
+                        shell_quote(tag),
+                        shell_quote(dir)])
         with self.filesystem.tempname() as tmp:
             p1 = self.subprocess.Popen(cmd + ' 2>&1', # merge stderr with stdout
                                        shell = True,
@@ -28,3 +28,9 @@ class Docker(object):
                     return (status, h.read())
             except IOError:
                 return (status, '')
+
+SHELL_QUOTABLE = re.compile('^[ -_0-9a-zA-Z:/]*$')
+
+def shell_quote(word):
+    assert SHELL_QUOTABLE.match(word), 'quoting %r not supported' % word
+    return "'" + word + "'"

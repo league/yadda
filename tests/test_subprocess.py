@@ -13,9 +13,13 @@ class BaseSubprocessTest(object):
         self.sp.check_output('echo hi', shell=True)
         self.assertInLastLog('echo hi')
 
+    def test_check_output_ro(self):
+        self.sp.check_output_ro(['echo', 'blah'])
+        self.assertInLastLog('echo blah')
+
     def test_check_popen(self):
-        p = self.sp.Popen(['echo', 'hi'])
-        self.assertInLastLog('echo hi')
+        p = self.sp.Popen(['echo', 'blorp'])
+        self.assertInLastLog('echo blorp')
         if p:
             p.wait()
 

@@ -1,57 +1,72 @@
 # test_init ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-#from yadda.commands.init import opts_to_list
+from tests.container import TestContainer
+from uuid import uuid4 as uuid
+from yadda.commands.init import InitCommand
+from yadda.models import Role
 import argparse
 import unittest
 
-#class InitTest(GitWorkDirCase, AppNameCase):
-#    def setUp(self):
-#        super(InitTest, self).setUp()
-#        os.environ['YADDA_TEST_BAN'] = settings.SSH
-#
-#    def test_basic_init(self):
-#        main(['init', '-n', self.name])
-#
-#    def test_init_qa(self):
-#        main(['init', '-n', self.name, 'localhost'])
-#
-#    def test_init_qa_remote(self):
-#        main(['init', self.name, 'localhost'])
-#        out = subprocess.check_output('git remote -v'.split())
-#        url = 'localhost:%s.git' % self.name
-#        ok = False
-#        for line in out.split('\n'):
-#            if line.startswith('qa'):
-#                self.assertTrue(url in line)
-#                ok = True
-#        self.assertTrue(ok)
-#
-#    def test_init_live(self):
-#        main(['init', '-n', '-t', 'qa', self.name, 'localhost', 'localhost'])
-#
-#    def test_reinit_existing(self):
-#        main(['init', '-t', 'live', self.name, 'host1', 'host2'])
-#        main(['init', '-t', 'live', self.name, 'host3', 'host4'])
-#
-#    def test_change_role(self):
-#        main(['init', '-t', 'live', self.name, 'localhost'])
-#        main(['init', '-t', 'qa', self.name])
-
-class OptsTest(unittest.TestCase):
+class InitTest(unittest.TestCase):
     def setUp(self):
-        self.opts = argparse.Namespace(name='foo', qa=None, live=None,
-                                       dry_run=False, verbose=0,
-                                       database=False, subdir=None)
+        container = TestContainer()
+        self.filesystem = container['filesystem']
+        self.subprocess = container['subprocess']
+        self.appfactory = container['appfactory']
+        self.init = InitCommand(container)
+        self.opts = argparse.Namespace(
+            prog = 'yadda',
+            verbose = 0,
+            dry_run = True,
+            name = uuid().hex,
+            target = Role.dev,
+            qa = None,
+            live = None,
+            subdir = None,
+            database = None,
+        )
 
-    def test_subdir_opt(self):
-        self.opts.subdir = 'sub'
-#        self.assertEqual(opts_to_list(self.opts), ['foo', '-C', 'sub'])
+    def test_run_simple(self):
+        self.init.run(self.opts)
 
-    def test_database_opt(self):
+    def test_run_with_qa(self):
+        self.opts.qa = uuid().hex
+        self.init.run(self.opts)
+
+    def test_run_with_qa_verbose(self):
+        self.opts.verbose = True
+        self.opts.qa = uuid().hex
+        self.init.run(self.opts)
+
+    def test_run_with_qa_db(self):
         self.opts.database = True
-#        self.assertEqual(opts_to_list(self.opts), ['foo', '-d'])
+        self.opts.qa = uuid().hex
+        self.init.run(self.opts)
 
-#class InitNonGitTest(TmpDirCase, AppNameCase):
-#    def test_init_non_git(self):
-#        main(['init', self.name])
+    def test_run_with_qa_subdir(self):
+        self.opts.subdir = 'example'
+        self.opts.qa = uuid().hex
+        self.init.run(self.opts)
+
+    def test_run_on_qa_with_live(self):
+        self.opts.target = Role.qa
+        self.opts.qa = uuid().hex
+        self.opts.live = uuid().hex
+        self.init.run(self.opts)
+
+    def test_run_already_exists(self):
+        self.appfactory.new(self.opts.name).save()
+        self.init.run(self.opts)
+
+    def test_run_exists_change_role(self):
+        self.opts.target = Role.qa
+        self.appfactory.new(self.opts.name).save()
+        self.init.run(self.opts)
+
+    def test_run_git_working_dir(self):
+        self.filesystem.mkdir('./.git')
+        self.filesystem.create_file_containing('./.git/config')
+        self.opts.qa = uuid().hex
+        self.subprocess.provideResultEq('git remote', 'master\njunk\ntmp\n')
+        self.init.run(self.opts)

@@ -1,8 +1,8 @@
-# tests/container.py ▪ configuring dependencies for tests ▪ coding: utf8
+# tests.container ▪ configuring dependencies for tests ▪ coding: utf8
 # ©2014 Christopher League <league@contrapunctus.net>
 
-from tests.mock.filesystem import MockFilesystem
-from tests.mock.subprocess import MockSubprocess
+from tests.mock_filesys import MockFilesystem
+from tests.mock_subproc import MockSubprocess
 from yadda.container import LazyContainer
 
 class TestContainer(LazyContainer):
