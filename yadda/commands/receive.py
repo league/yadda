@@ -4,6 +4,7 @@
 from datetime import datetime
 from yadda.settings import HASH_ABBREV
 import os.path
+import sys
 
 def args(cmd, subparse, common):
     p = subparse.add_parser(cmd, help=Receive.__doc__,
@@ -20,7 +21,7 @@ class Receive(object):
         self.appfactory = container['appfactory']
         self.stdout     = container['stdout']
 
-    def run(self, app, stdin):
+    def run(self, opts, stdin=sys.stdin):
         # Determine latest commit to master
         commit = self.git.receive_master_commit(stdin)
         if not commit:
@@ -29,11 +30,11 @@ class Receive(object):
 
         # Check out into a fresh working dir
         workdir = os.path.join(self.filesystem.home(),
-                               app.name + '-' + commit[:HASH_ABBREV])
+                               opts.app.name + '-' + commit[:HASH_ABBREV])
         self.filesystem.maybe_mkdir(workdir)
-        b = app.newBuild(commit, workdir=workdir)
+        b = opts.app.newBuild(commit, workdir=workdir)
         self.log.info('Starting build %s in %s', b.tag(), workdir)
-        app.save()
+        opts.app.save()
         self.git.export(commit, workdir)
 
         # Build it with docker

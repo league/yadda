@@ -22,6 +22,7 @@ def main(argv=sys.argv):
         determine_app(container, opts)
         if opts.cmd == 'receive':
             set_formatter(console, opts.app.role)
+            opts.ctor(container).run(opts)
         elif opts.target == opts.app.role: # We're in the right place
             opts.ctor(container).run(opts)
         else:
