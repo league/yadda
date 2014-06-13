@@ -34,6 +34,8 @@ def main(argv=sys.argv):
             print("TODO: ssh %s %s " + argv)
 
 def process_args(argv):
+    if argv[0].endswith('receive'):
+        argv.append('receive')
     opts = args().parse_args(argv[1:])
     opts.prog = argv[0]
     if opts.cmd == 'receive' or opts.dry_run:

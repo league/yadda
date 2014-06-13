@@ -17,6 +17,13 @@ class MainTest(unittest.TestCase):
         opts = main.process_args(['yadda', 'env', 'log', '-nv'])
         self.assertEqual(opts.verbose, 2)
 
+    def test_receive_arg(self):
+        opts1 = main.process_args(['yadda', 'receive'])
+        opts2 = main.process_args(['pre-receive'])
+        for k, v in vars(opts1).items():
+            if k not in ['prog', 'ctor']:
+                self.assertEqual(getattr(opts2, k), v)
+
 class MainOptsTest(LogSetup):
     def setUp(self):
         container = TestContainer()
