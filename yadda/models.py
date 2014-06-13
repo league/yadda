@@ -7,6 +7,7 @@ from datetime import datetime
 from yadda import version
 from yadda.settings import HASH_ABBREV
 import hashlib
+import re
 
 class Role(object):
     dev = 'dev'
@@ -66,6 +67,28 @@ class App(object):
 
     def newBuild(self, *args, **kwargs):
         return Build(self, *args, **kwargs)
+
+    def envByFlexVersion(self, version):
+        if '.' in version:
+            return self.envByFullVersion(version)
+        elif re.match('^[0-9a-fA-F]+$', version) and len(version) >= HASH_ABBREV:
+            return self.envByChecksum(version)
+        elif re.search('[^0-9]', version):
+            raise IndexError
+        else:
+            return self.envBySerial(int(version))
+
+    def envByChecksum(self, s):
+        for e in self.envs:
+            if e.frozen and e.frozen.startswith(s):
+                return e
+        raise IndexError
+
+    def envByFullVersion(self, v):
+        for e in self.envs:
+            if e.version() == v:
+                return e
+        raise IndexError
 
     def envBySerial(self, serial):
         for e in self.envs:

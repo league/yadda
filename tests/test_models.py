@@ -55,6 +55,15 @@ class EnvModelTest(AppTest):
         e2 = self.a.envBySerial(2)
         self.assertEqual(e1, e2)
 
+    def test_lookup_checksum_fail(self):
+        self.assertRaises(IndexError, self.a.envByChecksum, 'fffff')
+
+    def test_lookup_full_fail(self):
+        self.assertRaises(IndexError, self.a.envByFullVersion, 'qa.1.fffff')
+
+    def test_lookup_serial_fail(self):
+        self.assertRaises(IndexError, self.a.envBySerial, 99)
+
     def test_copy(self):
         self.e.freeze()
         self.f = self.e.set('SECRET', 'abc123')

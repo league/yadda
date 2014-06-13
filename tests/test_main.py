@@ -49,17 +49,17 @@ class MainRunTest(unittest.TestCase):
         main.run(['pre-receive'], self.container, opts)
 
     def test_run_env_ls(self):
-        opts = main.process_args(['yadda', 'env', 'ls', '-a', self.name])
+        opts = main.process_args(['yadda', 'env', '-a', self.name])
         main.run([], self.container, opts)
 
     def test_other_target(self):
-        opts = main.process_args(['yadda', 'env', 'ls', '-t', 'qa', '-a', self.name])
+        opts = main.process_args(['yadda', 'env', '-t', 'qa', '-a', self.name])
         main.run([], self.container, opts)
 
     def test_other_target_unknown(self):
         self.app.qa = None
         self.appfactory.save(self.app)
-        opts = main.process_args(['yadda', 'env', 'ls', '-t', 'qa', '-a', self.name])
+        opts = main.process_args(['yadda', 'env', '-t', 'qa', '-a', self.name])
         self.assertRaises(SystemExit, main.run, [], self.container, opts)
 
 class MainOptsTest(LogSetup):

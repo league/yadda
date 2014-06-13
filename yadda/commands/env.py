@@ -18,15 +18,24 @@ class EnvCommand(object):
         self.appfactory = container['appfactory']
 
     def run(self, opts):
-        getattr(self, opts.func)(opts)
+        if opts.log:
+            return self.run_log(opts)
+        if opts.version is None:
+            return self.run_ls(opts)
+        try:                    # First try to interpret as VAR=VAL
+            k, v = binding_arg(opts.version)
+            opts.binding.insert(0, (k,v))
+            return self.run_set_rm(opts)
+        except argparse.ArgumentTypeError:
+            return self.run_ls(opts)   # If that fails, must be VERSION
 
     def run_ls(self, opts):
         'list the values of variables in the environment'
-        if opts.revision:
+        if opts.version:
             try:
-                e = opts.app.envBySerial(opts.revision)
+                e = opts.app.envByFlexVersion(opts.version)
             except IndexError:
-                raise SystemExit('no such revision: %d' % opts.revision)
+                raise SystemExit('no such revision: %s' % opts.version)
         else:
             e = opts.app.envs[-1]
         if opts.format == 'json':
@@ -58,67 +67,42 @@ class EnvCommand(object):
     def summarize_version(self, e):
         self.stdout.write(e.version() + ': ' + e.history + '\n')
 
-    def modify(self, opts, func):
-        e = func(opts, copy(opts.app.envs[-1])).freeze()
+    def run_set_rm(self, opts):
+        e = copy(opts.app.envs[-1])
+        for k in opts.delete or []:
+            e = e.rm(k)
+        for k,v in opts.binding:
+            e = e.set(k, v)
+        e = e.freeze()
         self.appfactory.save(opts.app)
         self.summarize_version(e)
-
-    def func_set(self, opts, e):
-        for b in opts.bindings:
-            e = e.set(b[0], b[1])
-        return e
-
-    def run_set(self, opts):
-        'add new bindings to the environment and redeploy'
-        self.modify(opts, self.func_set)
-
-    def func_rm(self, opts, e):
-        for v in opts.variables:
-            e = e.rm(v)
-        return e
-
-    def run_rm(self, opts):
-        'remove bindings from the environment and redeploy'
-        self.modify(opts, self.func_rm)
 
     def run_log(self, opts):
         'list changes to the environment over time'
         for e in opts.app.envs:
             self.summarize_version(e)
 
-def parser_for(variant, vs, common, *args, **kwargs):
-    method = getattr(EnvCommand, 'run_' + variant)
-    p = vs.add_parser(variant, parents=[common], help=method.__doc__,
-                      description=method.__doc__.capitalize())
-    p.set_defaults(func=method.__name__)
-    return p
-
 def args(cmd, subparse, common):
     p = subparse.add_parser(cmd, parents=[common], help=EnvCommand.__doc__,
                             description=EnvCommand.__doc__.capitalize())
     p.set_defaults(cmd=cmd, ctor=EnvCommand)
-    vs = p.add_subparsers(title='Variants')
-
-    ls = parser_for('ls', vs, common)
-    ls.add_argument('-f', '--format', choices=EnvCommand.FORMATS,
-                    default='human',
-                    help='how to output the environment (default human)')
-    ls.add_argument('revision', metavar='REVISION', nargs='?', type=int,
-                    help='version of the environment (default latest)')
-
-    set = parser_for('set', vs, common)
-    set.add_argument('bindings', metavar='VAR=VALUE', nargs='+',
-                     type=binding_arg,
-                     help='bindings to add to environment')
-
-    rm = parser_for('rm', vs, common)
-    rm.add_argument('variables', metavar='VAR', nargs='+',
-                    help='variables to remove from environment')
-
-    parser_for('log', vs, common)
+    p.add_argument('-l', '--log', action='store_true',
+                   help='show history of changes to environment')
+    p.add_argument('-d', '--delete', metavar='VAR', action='append',
+                   help='remove variable from the environment')
+    p.add_argument('-f', '--format', choices=EnvCommand.FORMATS,
+                   default='human',
+                   help='how to output the environment (default human)')
+    p.add_argument('version', metavar='VERSION', nargs='?', type=str,
+                   help='version to show')
+    p.add_argument('binding', metavar='VAR=VAL', nargs='*', type=binding_arg,
+                   help='version to show, or binding to add to environment')
     return p
 
 BINDING_RE = re.compile('^([-_a-zA-Z0-9]+)=(.*)$')
+
+def is_binding(s):
+    return bool(BINDING_RE.match(s))
 
 def binding_arg(s):
     m = BINDING_RE.match(s)
