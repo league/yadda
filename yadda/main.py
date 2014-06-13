@@ -32,7 +32,7 @@ def main(argv=sys.argv):
                                  (opts.app.name, opts.target))
             argv.append('--app')
             argv.append(opts.app.name)
-            print("TODO: ssh %s %s " + argv)
+            print("TODO: ssh %s %s " % (host, argv))
 
 def process_args(argv):
     if argv[0].endswith('receive'):
