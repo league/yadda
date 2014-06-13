@@ -4,6 +4,7 @@
 from tests.mock_filesys import MockFilesystem
 from tests.mock_subproc import MockSubprocess
 from yadda.container import LazyContainer
+import logging
 
 class TestContainer(LazyContainer):
     def setup_subprocess(self):
@@ -11,3 +12,7 @@ class TestContainer(LazyContainer):
 
     def setup_filesystem(self):
         return MockFilesystem()
+
+class AltLogTestContainer(TestContainer):
+    def setup_log(self):
+        return logging.getLogger('test.yadda')

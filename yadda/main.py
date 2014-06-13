@@ -14,7 +14,8 @@ import yadda.commands
 
 def main(argv=sys.argv):
     opts = process_args(argv)
-    container, console = configure_deps(opts)
+    container = DryRunContainer() if opts.dry_run else LazyContainer()
+    console = configure_deps(container, opts)
     if opts.cmd == 'init':
         opts.ctor(container).run(opts)
     else:
@@ -39,8 +40,7 @@ def process_args(argv):
         opts.verbose += 1
     return opts
 
-def configure_deps(opts):
-    container = DryRunContainer() if opts.dry_run else LazyContainer()
+def configure_deps(container, opts):
     console = logging.StreamHandler()
     set_formatter(console, None if opts.cmd == 'receive' else opts.target)
     log = container['log']
@@ -77,7 +77,10 @@ def log_opts_wrapped(log, opts):
 
 def determine_app(container, opts):
     if not opts.app:
-        opts.app = container['git'].get_local_config('yadda.app')
+        try:
+            opts.app = container['git'].get_local_config('yadda.app')
+        except KeyError:
+            pass
     if not opts.app:
         cwd = container['filesystem'].getcwd()
         opts.app, ext = os.path.splitext(os.path.basename(cwd))
