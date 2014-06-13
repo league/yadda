@@ -44,6 +44,6 @@ class Git(object):
 
     def export(self, commitish, dest):
         self.subprocess.check_call(
-            'git archive "%s" | tar -x -C "%s"' % (commitish, dest),
+            'git archive "%s" | tar -x -m -C "%s"' % (commitish, dest),
             shell=True
         )
